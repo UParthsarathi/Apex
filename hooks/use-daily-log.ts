@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-export type LogType = 'food' | 'workout' | 'task' | 'sleep';
+export type LogType = 'food' | 'workout' | 'task' | 'sleep' | 'water';
+
+export interface WaterEntry {
+  id: string;
+  type: 'water';
+  timestamp: number;
+  amount: number; // in ml
+}
 
 export interface FoodItem {
   id: string;
@@ -56,9 +63,10 @@ export interface SleepEntry {
   timestamp: number;
   duration: number; // in hours
   quality: number; // 1-10
+  category: 'Sleep' | 'Nap';
 }
 
-export type LogEntry = (FoodEntry | WorkoutEntry | TaskEntry | SleepEntry) & { isSimulation?: boolean };
+export type LogEntry = (FoodEntry | WorkoutEntry | TaskEntry | SleepEntry | WaterEntry) & { isSimulation?: boolean };
 
 export function useDailyLog() {
   const [realEntries, setRealEntries] = useState<LogEntry[]>([]);
@@ -123,6 +131,21 @@ export function useDailyLog() {
     }
   };
 
+  const addWater = (amount: number, date?: Date) => {
+    const timestamp = date ? date.getTime() : Date.now();
+    const entry: WaterEntry = {
+      id: uuidv4(),
+      type: 'water',
+      timestamp,
+      amount,
+    };
+    if (isSimulationMode) {
+      setSimulationEntries(prev => [entry, ...prev]);
+    } else {
+      setRealEntries(prev => [entry, ...prev]);
+    }
+  };
+
   const addWorkout = (activity: string, calories: number, duration?: number, date?: Date) => {
     const timestamp = date ? date.getTime() : Date.now();
     const entry: WorkoutEntry = {
@@ -156,7 +179,7 @@ export function useDailyLog() {
     }
   };
 
-  const addSleep = (duration: number, quality: number, date?: Date) => {
+  const addSleep = (duration: number, quality: number, category: 'Sleep' | 'Nap' = 'Sleep', date?: Date) => {
     const timestamp = date ? date.getTime() : Date.now();
     const entry: SleepEntry = {
       id: uuidv4(),
@@ -164,6 +187,7 @@ export function useDailyLog() {
       timestamp,
       duration,
       quality,
+      category,
     };
     if (isSimulationMode) {
       setSimulationEntries(prev => [entry, ...prev]);
@@ -272,14 +296,32 @@ export function useDailyLog() {
 
       const sleepTime = new Date(baseTime);
       sleepTime.setHours(7, 0); // Recorded when waking up
+      const sleepHours = 7 + Math.floor(Math.random() * 2);
+      const sleepMinutes = Math.floor(Math.random() * 12) * 5;
       mockEntries.push({
         id: uuidv4(),
         type: 'sleep',
         timestamp: sleepTime.getTime(),
-        duration: 6.5 + Math.random() * 2.5,
+        duration: sleepHours + sleepMinutes / 60,
         quality: 6 + Math.floor(Math.random() * 4),
+        category: 'Sleep',
         isSimulation: true
       });
+
+      if (Math.random() > 0.7) {
+        const napTime = new Date(baseTime);
+        napTime.setHours(14, 30);
+        const napMinutes = 20 + Math.floor(Math.random() * 40);
+        mockEntries.push({
+          id: uuidv4(),
+          type: 'sleep',
+          timestamp: napTime.getTime(),
+          duration: napMinutes / 60,
+          quality: 5 + Math.floor(Math.random() * 3),
+          category: 'Nap',
+          isSimulation: true
+        });
+      }
     }
 
     setSimulationEntries(mockEntries.sort((a, b) => b.timestamp - a.timestamp));
@@ -291,6 +333,7 @@ export function useDailyLog() {
     isSimulationMode,
     setIsSimulationMode,
     addFood,
+    addWater,
     addWorkout,
     addTask,
     addSleep,

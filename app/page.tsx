@@ -14,10 +14,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showConsistency, setShowConsistency] = useState(false);
   const { 
     entries, 
     isSimulationMode,
     addFood, 
+    addWater,
     addWorkout, 
     addTask, 
     addSleep,
@@ -37,7 +40,7 @@ export default function App() {
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           className="small-caps !text-[#00FF88]"
         >
-          Initializing Apex
+          Initializing Application
         </motion.div>
       </div>
     );
@@ -68,6 +71,22 @@ export default function App() {
 
       {/* Content Area */}
       <main className="flex-1 overflow-y-auto no-scrollbar relative pt-20">
+        {/* Global Navigation Icons */}
+        <div className="fixed top-6 right-5 z-[60] flex items-center gap-3">
+          <button 
+            onClick={() => setShowPerformance(true)}
+            className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-[#00FF88] hover:bg-[#111] hover:border-[#00FF88]/20 transition-all active:scale-95 shadow-2xl shadow-black"
+          >
+            <BarChart2 size={18} strokeWidth={1.5} />
+          </button>
+          <button 
+            onClick={() => setShowConsistency(true)}
+            className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-sky-400 hover:bg-[#111] hover:border-sky-400/20 transition-all active:scale-95 shadow-2xl shadow-black"
+          >
+            <Calendar size={18} strokeWidth={1.5} />
+          </button>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -84,6 +103,7 @@ export default function App() {
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
                 addFood={addFood} 
+                addWater={addWater}
                 addWorkout={addWorkout} 
                 addTask={addTask} 
                 onSeed={seedSimulation}
@@ -96,11 +116,11 @@ export default function App() {
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
                 addFood={addFood}
+                addWater={addWater}
                 addWorkout={addWorkout}
                 addTask={addTask}
                 deleteEntry={deleteEntry} 
                 onDateJump={handleDateJump} 
-                onSwitchToProtocol={() => setActiveTab('protocol')}
               />
             )}
             {activeTab === 'tasks' && (
@@ -118,6 +138,7 @@ export default function App() {
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
                 addFood={addFood}
+                addWater={addWater}
                 addWorkout={addWorkout}
                 addSleep={addSleep}
                 addTask={addTask}
@@ -139,13 +160,26 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {/* Modals */}
+      <PerformanceModal 
+        isOpen={showPerformance} 
+        onClose={() => setShowPerformance(false)} 
+        entries={entries} 
+        selectedDate={selectedDate} 
+      />
+      <ConsistencyModal 
+        isOpen={showConsistency} 
+        onClose={() => setShowConsistency(false)} 
+        entries={entries} 
+      />
+
       {/* Floating Bottom Navigation */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
         <nav className="bg-[#111]/80 backdrop-blur-2xl border border-white/5 rounded-3xl p-1.5 flex justify-around items-center shadow-2xl shadow-black">
-          <NavItem icon={<Home strokeWidth={1.5} size={18} />} label="Status" isActive={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-          <NavItem icon={<History strokeWidth={1.5} size={18} />} label="Logs" isActive={activeTab === 'history'} onClick={() => setActiveTab('history')} />
-          <NavItem icon={<Zap strokeWidth={1.5} size={18} />} label="Protocol" isActive={activeTab === 'protocol'} onClick={() => setActiveTab('protocol')} />
-          <NavItem icon={<CheckSquare strokeWidth={1.5} size={18} />} label="Focus" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
+          <NavItem icon={<Home strokeWidth={1.5} size={18} />} label="Daily" isActive={activeTab === 'home'} onClick={() => setActiveTab('home')} />
+          <NavItem icon={<Zap strokeWidth={1.5} size={18} />} label="Log" isActive={activeTab === 'protocol'} onClick={() => setActiveTab('protocol')} />
+          <NavItem icon={<CheckSquare strokeWidth={1.5} size={18} />} label="Goals" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
+          <NavItem icon={<History strokeWidth={1.5} size={18} />} label="Trends" isActive={activeTab === 'history'} onClick={() => setActiveTab('history')} />
         </nav>
       </div>
     </div>
@@ -178,12 +212,13 @@ function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, la
 
 // --- TABS ---
 
-function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, addWorkout, addTask, onSeed, onClearSimulation }: { 
+function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, addWater, addWorkout, addTask, onSeed, onClearSimulation }: { 
   entries: LogEntry[], 
   isSimulation: boolean,
   selectedDate: Date,
   onDateChange: (d: Date) => void,
   addFood: (meal: FoodEntry['meal'], desc: string, nutrition?: any, date?: Date) => void, 
+  addWater: (amount: number, date?: Date) => void,
   addWorkout: (activity: string, calories: number, duration?: number, date?: Date) => void, 
   addTask: (desc: string, date?: Date) => void,
   onSeed: () => void,
@@ -194,11 +229,16 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
   const tasks = todayEntries.filter(e => e.type === 'task') as TaskEntry[];
   const workouts = todayEntries.filter(e => e.type === 'workout') as WorkoutEntry[];
   const food = todayEntries.filter(e => e.type === 'food') as FoodEntry[];
+  const waterEntries = todayEntries.filter(e => e.type === 'water') as any[];
 
   const completedTasks = tasks.filter(t => t.completed).length;
   const totalBurned = workouts.reduce((sum, w) => sum + w.calories, 0);
+  const totalWater = waterEntries.reduce((sum, w) => sum + w.amount, 0);
+  
   const sleepEntries = todayEntries.filter(e => e.type === 'sleep') as SleepEntry[];
-  const totalSleep = sleepEntries.reduce((sum, s) => sum + s.duration, 0);
+  const coreSleep = sleepEntries.filter(s => s.category !== 'Nap').reduce((sum, s) => sum + s.duration, 0);
+  const napSleep = sleepEntries.filter(s => s.category === 'Nap').reduce((sum, s) => sum + s.duration, 0);
+  const totalSleep = coreSleep + napSleep;
   const avgSleepQuality = sleepEntries.length > 0 
     ? sleepEntries.reduce((sum, s) => sum + s.quality, 0) / sleepEntries.length 
     : 0;
@@ -233,73 +273,6 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
             </button>
           </motion.div>
         )}
-        <div className="flex justify-between items-end">
-          <div className="space-y-0 text-left">
-            <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Apex Protocol • {format(selectedDate, 'MMM d').toUpperCase()}</span>
-            <h1 className="display-light">Overview</h1>
-          </div>
-          <div className="pb-1 flex flex-col items-end gap-2 fixed top-6 right-5 z-[60]">
-            <button 
-              onClick={() => setShowPerformance(true)}
-              className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-[#00FF88] hover:bg-[#111] hover:border-[#00FF88]/20 transition-all active:scale-95 shadow-2xl shadow-black"
-            >
-              <BarChart2 size={18} strokeWidth={1.5} />
-            </button>
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {showPerformance && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowPerformance(false)}
-                className="absolute inset-0 bg-black/80 backdrop-blur-md"
-              />
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between mb-8">
-                  <div className="space-y-0.5">
-                    <span className="small-caps !text-[#00FF88] text-[8px] !tracking-[0.3em]">Neural Trends</span>
-                    <h2 className="text-xl font-light tracking-tight uppercase">Performance</h2>
-                  </div>
-                  <button 
-                    onClick={() => setShowPerformance(false)}
-                    className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <div className="flex gap-6 mb-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#00FF88] shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
-                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Intake</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]" />
-                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Activity</span>
-                  </div>
-                </div>
-
-                <div className="h-64 mb-4">
-                  <PerformanceGraph entries={entries} selectedDate={selectedDate} />
-                </div>
-
-                <p className="text-[8px] text-center text-white/10 uppercase tracking-[0.2em] font-bold py-2 border-t border-white/5">
-                  Synchronized with local persistence buffer
-                </p>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
         <DateNavigator selectedDate={selectedDate} onDateChange={onDateChange} />
       </header>
 
@@ -307,26 +280,26 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#00FF88]/5 border border-[#00FF88]/10 rounded-3xl p-6 text-center space-y-4"
+          className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 text-center space-y-6"
         >
           <div className="space-y-2">
-            <h2 className="text-xl font-extralight tracking-tight text-[#00FF88]">Empty Substrate Detected</h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest leading-relaxed">No biometric records found. Initialize simulation to preview high-density data analytics.</p>
+            <h2 className="text-2xl font-extralight tracking-tight text-white">Empty Log</h2>
+            <p className="text-xs text-white/30 uppercase tracking-widest leading-relaxed">No records found. Seed sample data to see how the dashboard works or start tracking manually below.</p>
           </div>
           <div className="flex gap-3">
             <button 
               type="button"
               onClick={onSeed}
-              className="flex-1 bg-[#00FF88] text-black px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(0,255,136,0.2)] hover:bg-[#00FF88]/90 active:scale-[0.98] transition-all cursor-pointer relative z-10"
+              className="flex-1 bg-white text-black px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white/90 active:scale-[0.98] transition-all cursor-pointer relative z-10"
             >
-              Run Simulation
+              Seed Data
             </button>
             <button 
               type="button"
-              onClick={() => addTask('First Protocol: Establish Baseline')}
+              onClick={() => addTask('Establish your daily goals')}
               className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer relative z-10"
             >
-              Manual Start
+              Start Log
             </button>
           </div>
         </motion.div>
@@ -335,116 +308,133 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
       {/* Primary Metrics Bento - High Density */}
       <section className="grid grid-cols-4 gap-3">
         {/* Main Burn/Intake Card */}
-        <div className="col-span-4 bento-card neon-shimmer bg-white/[0.05] p-5 flex items-center justify-between">
-          <div className="space-y-0.5">
+        <div className="col-span-4 bento-card neon-shimmer bg-white/[0.03] border-white/5 p-5 flex items-center justify-between relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="relative z-10 space-y-0.5">
             <span className="small-caps text-white/30 !tracking-widest">Net Intake</span>
             <div className="flex items-baseline gap-2">
-               <span className="text-4xl font-extralight tracking-tighter">
+               <span className="text-4xl font-extralight tracking-tighter text-white/90">
                  {nutrition.calories - totalBurned}
                </span>
                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest whitespace-nowrap">kcal</span>
             </div>
           </div>
           
-          <div className="flex gap-4 text-right">
+          <div className="relative z-10 flex gap-4 text-right">
             <div className="space-y-0">
-               <span className="text-[8px] font-bold text-[#00FF88]/40 uppercase">Eaten</span>
-               <p className="text-xl font-light leading-none">{nutrition.calories}</p>
+               <span className="text-[8px] font-bold text-[#00FF88]/40 uppercase tracking-widest">Eaten</span>
+               <p className="text-xl font-light leading-none text-white/80">{nutrition.calories}</p>
             </div>
-            <div className="space-y-0">
-               <span className="text-[8px] font-bold text-orange-400/40 uppercase">Burned</span>
+            <div className="space-y-0 text-orange-500/80">
+               <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">Burned</span>
                <p className="text-xl font-light leading-none">{totalBurned}</p>
             </div>
           </div>
         </div>
         
         {/* Macronutrient Status */}
-        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-white/[0.06]">
+        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-indigo-500/10 bg-indigo-500/[0.02] group">
            <div className="flex items-center justify-between">
-              <span className="small-caps !text-[#00FF88]/40 text-[8px] !tracking-[0.2em]">Protein</span>
-              <span className="text-base font-light font-mono tabular-nums">{nutrition.protein}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
+              <span className="small-caps !text-indigo-400/40 text-[8px] !tracking-[0.2em]">Protein</span>
+              <span className="text-base font-light font-mono tabular-nums text-indigo-100/80">{nutrition.protein}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
            </div>
            <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min((nutrition.protein / 160) * 100, 100)}%` }}
-                className="h-full bg-sky-400/60 shadow-[0_0_8px_rgba(56,189,248,0.2)]"
+                animate={{ width: `${Math.min((nutrition.protein / 90) * 100, 100)}%` }}
+                className="h-full bg-indigo-400/80 shadow-[0_0_8px_rgba(129,140,248,0.3)]"
               />
            </div>
         </div>
 
-        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-white/[0.06]">
+        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-emerald-500/10 bg-emerald-500/[0.02] group">
            <div className="flex items-center justify-between">
-              <span className="small-caps !text-[#00FF88]/40 text-[8px] !tracking-[0.2em]">Carbs</span>
-              <span className="text-base font-light font-mono tabular-nums">{nutrition.carbs}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
+              <span className="small-caps !text-emerald-400/40 text-[8px] !tracking-[0.2em]">Fiber</span>
+              <span className="text-base font-light font-mono tabular-nums text-emerald-100/80">{nutrition.fiber}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
            </div>
            <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min((nutrition.carbs / 280) * 100, 100)}%` }}
-                className="h-full bg-amber-400/60 shadow-[0_0_8px_rgba(251,191,36,0.2)]"
+                animate={{ width: `${Math.min((nutrition.fiber / 30) * 100, 100)}%` }}
+                className="h-full bg-emerald-400/80 shadow-[0_0_8px_rgba(52,211,153,0.3)]"
               />
            </div>
         </div>
 
-        <div className="bento-card p-3 flex flex-col items-center gap-1">
-           <span className="text-base font-light text-rose-400/80">{nutrition.fat}g</span>
-           <span className="text-[8px] font-bold tracking-[0.2em] text-white/10 uppercase">Fats</span>
-        </div>
-
-        <div className="bento-card p-3 flex flex-col items-center gap-1">
-           <span className="text-base font-light text-emerald-400/80">{nutrition.fiber}g</span>
-           <span className="text-[8px] font-bold tracking-[0.2em] text-white/10 uppercase">Fiber</span>
-        </div>
-
-        <div className="col-span-2 bento-card p-3 flex items-center justify-center gap-4 bg-white/[0.02] border-white/[0.06]">
-           <div className="flex flex-col items-center">
-             <span className="text-base font-light font-mono text-white/80 leading-tight">{completedTasks}<span className="text-white/20 mx-0.5">/</span>{tasks.length}</span>
-             <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Goals</span>
-           </div>
-           <div className="w-[1px] h-6 bg-white/5" />
-           <div className="flex flex-col items-center">
-             <span className="text-base font-light font-mono text-[#00FF88]/80 leading-tight">{tasks.length > 0 ? Math.round((completedTasks/tasks.length)*100) : 0}%</span>
-             <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Done</span>
-           </div>
+        {/* Water Intake Card */}
+        <div className="col-span-2 bento-card p-4 flex flex-col justify-between border-blue-500/10 bg-blue-500/[0.03] group">
+          <div className="flex justify-between items-start">
+            <span className="small-caps !text-blue-400/40 text-[8px] !tracking-[0.2em]">Hydration</span>
+            <Droplets size={12} className="text-blue-400/40" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-light text-blue-400/90 leading-none tabular-nums">{totalWater}</span>
+            <span className="text-[8px] text-blue-400/20 uppercase font-bold tracking-widest">ml</span>
+          </div>
+          <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden mt-1">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((totalWater / 3000) * 100, 100)}%` }}
+              className="h-full bg-blue-500/80 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+            />
+          </div>
         </div>
 
         {/* Sleep Card */}
-        <div className="col-span-4 bento-card p-5 bg-sky-500/[0.03] border-sky-500/10 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-400">
-                <Zap size={20} strokeWidth={1.5} />
-              </div>
-              <div className="space-y-0.5">
-                <span className="small-caps !text-sky-400/40 text-[8px] !tracking-[0.2em]">Regeneration</span>
-                <p className="text-xl font-light tracking-tight">{totalSleep} <small className="text-[10px] opacity-40 uppercase">Hours</small></p>
-              </div>
-            </div>
-            
-            <div className="text-right">
-              <span className="text-[8px] font-bold text-white/10 uppercase tracking-widest block mb-1">Quality Index</span>
-              <div className="flex gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className={cn("w-3 h-1 rounded-full", i < (avgSleepQuality / 2) ? "bg-sky-400" : "bg-white/5")} />
-                ))}
-              </div>
-            </div>
+        <div className="col-span-2 bento-card p-4 flex flex-col justify-between border-violet-500/10 bg-violet-500/[0.03] group">
+          <div className="flex justify-between items-start">
+            <span className="small-caps !text-violet-400/40 text-[8px] !tracking-[0.2em]">Rest</span>
+            <Zap size={12} className="text-violet-400/40" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-light text-violet-400/90 leading-none tabular-nums">{Math.floor(totalSleep)}</span>
+            <span className="text-[10px] text-violet-400/20 uppercase font-bold tracking-widest">h</span>
+            <span className="text-2xl font-light text-violet-400/90 leading-none tabular-nums ml-1">{Math.round((totalSleep % 1) * 60)}</span>
+            <span className="text-[10px] text-violet-400/20 uppercase font-bold tracking-widest">m</span>
+          </div>
+          <div className="flex gap-0.5 mt-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className={cn("flex-1 h-0.5 rounded-full shadow-sm", i < (avgSleepQuality / 2) ? "bg-violet-400" : "bg-white/5")} />
+            ))}
+          </div>
+        </div>
+
+        <div className="bento-card p-3 flex flex-col items-center gap-1 border-amber-500/5 bg-amber-500/[0.02]">
+           <span className="text-base font-light text-amber-400/80 leading-none">{nutrition.carbs}g</span>
+           <span className="text-[7px] font-bold tracking-[0.2em] text-amber-500/20 uppercase">Carbs</span>
+        </div>
+
+        <div className="bento-card p-3 flex flex-col items-center gap-1 border-rose-500/5 bg-rose-500/[0.02]">
+           <span className="text-base font-light text-rose-500/80 leading-none">{nutrition.fat}g</span>
+           <span className="text-[7px] font-bold tracking-[0.2em] text-rose-500/20 uppercase">Fats</span>
+        </div>
+
+        <div className="col-span-2 bento-card p-3 flex items-center justify-center gap-4 bg-[#00FF88]/[0.02] border-[#00FF88]/10 group">
+           <div className="flex flex-col items-center">
+              <span className="text-base font-light font-mono text-white/80 leading-tight">{completedTasks}<span className="text-white/20 mx-0.5">/</span>{tasks.length}</span>
+              <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Goals</span>
+           </div>
+           <div className="w-[1px] h-6 bg-white/5" />
+           <div className="flex flex-col items-center">
+              <span className="text-base font-light font-mono text-[#00FF88]/90 leading-tight">{tasks.length > 0 ? Math.round((completedTasks/tasks.length)*100) : 0}%</span>
+              <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Done</span>
+           </div>
         </div>
       </section>
     </div>
   );
 }
 
-function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWorkout, addTask, deleteEntry, onDateJump, onSwitchToProtocol }: { 
+function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWater, addWorkout, addTask, deleteEntry, onDateJump }: { 
   entries: LogEntry[], 
   selectedDate: Date,
   onDateChange: (d: Date) => void,
   addFood: (meal: FoodEntry['meal'], desc: string, nutrition?: any, date?: Date) => void, 
+  addWater: (amount: number, date?: Date) => void,
   addWorkout: (activity: string, calories: number, duration?: number, date?: Date) => void, 
   addTask: (desc: string, date?: Date) => void,
   deleteEntry: (id: string) => void, 
-  onDateJump: (d: Date) => void,
-  onSwitchToProtocol: () => void
+  onDateJump: (d: Date) => void
 }) {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -479,24 +469,24 @@ function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWorkout, 
     <div className="px-5 flex flex-col min-h-full transition-all duration-500">
       <header className="mb-6 flex justify-between items-end">
         <div>
-          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Temporal Buffer</span>
-          <h1 className="display-light text-3xl">{focusedDate ? 'Day Focus' : 'Journal'}</h1>
+          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Timeline</span>
+          <h1 className="display-light text-3xl">History</h1>
         </div>
         <div className="flex flex-col items-end gap-1">
           {focusedDate ? (
             <button 
               onClick={() => setFocusedDate(null)}
-              className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] font-bold uppercase tracking-widest text-[#00FF88] hover:bg-[#00FF88]/10 transition-all font-bold"
+              className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[8px] font-bold uppercase tracking-widest text-white hover:bg-white/10 transition-all"
             >
-              Month View
+              Close Day Focus
             </button>
           ) : (
             <>
-              <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Filter</span>
+              <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Month</span>
               <select 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-lg text-[10px] p-1 font-mono uppercase tracking-tighter outline-none focus:border-[#00FF88]/50 transition-all font-bold"
+                className="bg-white/5 border border-white/10 rounded-lg text-[10px] p-2 font-sans uppercase tracking-widest outline-none focus:border-white/20 transition-all font-bold"
               >
                 {months.map(m => (
                   <option key={m} value={m} className="bg-neutral-900">{format(new Date(m + '-01'), 'MMMM yyyy')}</option>
@@ -506,22 +496,6 @@ function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWorkout, 
           )}
         </div>
       </header>
-
-      {/* Protocol Shortcut */}
-      <section className="mb-10">
-        <button 
-          onClick={onSwitchToProtocol}
-          className="w-full bento-card p-4 bg-[#00FF88]/5 border border-[#00FF88]/10 flex items-center justify-between group active:scale-[0.98] transition-all"
-        >
-          <div className="flex flex-col items-start">
-            <span className="small-caps text-[#00FF88] text-[8px] !tracking-[0.3em]">Protocol Interface</span>
-            <span className="text-sm font-light tracking-tight text-white/60">Initialize New Entry</span>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-[#00FF88]/10 flex items-center justify-center text-[#00FF88] group-hover:scale-110 transition-transform">
-            <Plus size={20} strokeWidth={2} />
-          </div>
-        </button>
-      </section>
 
       {/* Ribbon Navigator */}
       {!focusedDate && sortedDates.length > 0 && (
@@ -563,35 +537,42 @@ function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWorkout, 
                 acc.sleep += e.duration;
               } else if (e.type === 'task' && e.completed) {
                 acc.tasksDone += 1;
+              } else if (e.type === 'water') {
+                acc.water += e.amount;
               }
               return acc;
-            }, { calories: 0, burned: 0, tasksDone: 0, sleep: 0 });
+            }, { calories: 0, burned: 0, tasksDone: 0, sleep: 0, water: 0 });
 
             const foods = dayEntries.filter(e => e.type === 'food') as FoodEntry[];
             const workouts = dayEntries.filter(e => e.type === 'workout') as WorkoutEntry[];
             const tasks = dayEntries.filter(e => e.type === 'task') as TaskEntry[];
             const sleeps = dayEntries.filter(e => e.type === 'sleep') as SleepEntry[];
+            const water = dayEntries.filter(e => e.type === 'water') as any[];
 
             return (
               <div key={date} className="space-y-6">
                 <div className="flex justify-between items-end border-b border-white/[0.05] pb-2.5 px-0.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88]/50 shadow-[0_0_8px_rgba(0,255,136,0.3)]" />
-                    <h3 className="small-caps !text-[#00FF88]/80 text-[10px] !tracking-[0.2em]">{dateLabel}</h3>
-                  </div>
-                  <div className="flex gap-4 text-[8px] font-mono tracking-tighter uppercase tabular-nums items-center">
-                    <span className="text-white/40"><span className="text-white/80 font-bold">{stats.calories}</span> IN</span>
-                    <span className="text-orange-400/40"><span className="text-orange-500/80 font-bold">{stats.burned}</span> OUT</span>
-                    {stats.sleep > 0 && <span className="text-sky-400/40"><span className="text-sky-500/80 font-bold">{stats.sleep}</span> HRS</span>}
-                    {stats.tasksDone > 0 && <span className="text-emerald-400/40"><span className="text-emerald-500/80 font-bold">{stats.tasksDone}</span> OK</span>}
-                    <button 
-                      onClick={() => onDateJump(new Date(date))}
-                      className="text-[#00FF88]/40 hover:text-[#00FF88] flex items-center gap-1 transition-colors ml-2"
-                    >
-                      <Activity size={10} />
-                      <span className="text-[7px] font-bold">STATUS</span>
-                    </button>
-                  </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88]/50 shadow-[0_0_8px_rgba(0,255,136,0.3)]" />
+            <h3 className="small-caps !text-[#00FF88]/80 text-[10px] !tracking-[0.2em]">{dateLabel}</h3>
+          </div>
+          <div className="flex gap-4 text-[8px] font-mono tracking-tighter uppercase tabular-nums items-center">
+            <span className="text-white/40"><span className="text-white/80 font-bold">{stats.calories}</span> CALS</span>
+            <span className="text-white/40"><span className="text-blue-500/80 font-bold">{stats.water}</span> ML</span>
+            <span className="text-orange-500/80 font-bold">{stats.burned} BURN</span>
+            {stats.sleep > 0 && (
+              <span className="text-violet-400/40">
+                <span className="text-violet-500/80 font-bold">{Math.floor(stats.sleep)}h {Math.round((stats.sleep % 1) * 60)}m</span> SLEEP
+              </span>
+            )}
+            <button 
+              onClick={() => onDateJump(new Date(date))}
+              className="text-[#00FF88]/40 hover:text-[#00FF88] flex items-center gap-1 transition-colors ml-2"
+            >
+              <Activity size={10} />
+              <span className="text-[7px] font-bold uppercase">View Day</span>
+            </button>
+          </div>
                 </div>
 
                 <div className="space-y-6">
@@ -600,6 +581,15 @@ function HistoryTab({ entries, selectedDate, onDateChange, addFood, addWorkout, 
                       <span className="text-[7px] font-bold text-white/10 uppercase tracking-widest block pl-1">Fuel Intake</span>
                       <div className="space-y-2">
                         {foods.map(entry => <LogEntryCard key={entry.id} entry={entry} onDelete={() => deleteEntry(entry.id)} />)}
+                      </div>
+                    </div>
+                  )}
+
+                  {water.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[7px] font-bold text-white/10 uppercase tracking-widest block pl-1">Hydration</span>
+                      <div className="space-y-2">
+                        {water.map(entry => <LogEntryCard key={entry.id} entry={entry} onDelete={() => deleteEntry(entry.id)} />)}
                       </div>
                     </div>
                   )}
@@ -648,7 +638,9 @@ function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleTask, de
   toggleTask: (id: string) => void, 
   deleteEntry: (id: string) => void 
 }) {
-  const dayTasks = entries.filter(e => e.type === 'task' && isSameDay(e.timestamp, selectedDate)) as TaskEntry[];
+  const dayEntries = entries.filter(e => isSameDay(e.timestamp, selectedDate));
+  const dayTasks = dayEntries.filter(e => e.type === 'task') as TaskEntry[];
+
   const sortedTasks = [...dayTasks].sort((a, b) => {
     if (a.completed === b.completed) return b.timestamp - a.timestamp;
     return a.completed ? 1 : -1;
@@ -659,11 +651,17 @@ function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleTask, de
       <header className="mb-6 space-y-4">
         <div className="flex justify-between items-end">
           <div>
-            <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Your Objectives</span>
-            <h1 className="display-light">Focus</h1>
+            <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Your Roadmap</span>
+            <h1 className="display-light">Goals</h1>
           </div>
-          <div className="pb-1 text-right">
+          <div className="pb-1 text-right flex flex-col items-end gap-1.5">
             <span className="text-xl font-light tracking-tight opacity-40">{format(selectedDate, 'MMM d')}</span>
+            <div className="flex items-baseline gap-1 bg-emerald-500/5 px-2.5 py-1 rounded-full border border-emerald-500/10">
+              <span className="text-[7px] font-bold text-emerald-500/40 uppercase tracking-[0.2em] leading-none">Status</span>
+              <span className="text-sm font-light tabular-nums leading-none text-emerald-400">{dayTasks.filter(t => t.completed).length}</span>
+              <span className="text-[8px] text-white/20 uppercase font-bold">/</span>
+              <span className="text-[8px] text-white/20 font-bold tabular-nums">{dayTasks.length}</span>
+            </div>
           </div>
         </div>
 
@@ -735,12 +733,11 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
   return (
     <div className="px-5 py-6 font-sans overflow-visible">
       <header className="mb-8 text-center pt-4">
-        <div className="w-16 h-16 rounded-full bg-[#00FF88]/10 border border-[#00FF88]/20 mx-auto mb-4 flex items-center justify-center relative">
-          <User size={24} className={cn("text-[#00FF88]", isSimulationMode && "text-sky-400")} />
-          <div className={cn("absolute inset-0 rounded-full border border-[#00FF88]/20 animate-pulse", isSimulationMode && "border-sky-400/20")} />
+        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 mx-auto mb-4 flex items-center justify-center relative">
+          <User size={24} className={cn("text-white/40", isSimulationMode && "text-sky-400")} />
         </div>
-        <span className={cn("small-caps text-[#00FF88] !tracking-[0.4em]", isSimulationMode && "text-sky-400")}>
-          {isSimulationMode ? "Simulation Active" : "Operational"}
+        <span className={cn("small-caps text-white/20 !tracking-[0.4em]", isSimulationMode && "text-sky-400")}>
+          {isSimulationMode ? "Sample Data Active" : "Operational"}
         </span>
         <h2 className="text-2xl font-extralight tracking-tight mt-1">Profile</h2>
       </header>
@@ -761,8 +758,8 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group border-b border-white/5"
              >
                 <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-widest", isSimulationMode ? "text-sky-400" : "text-[#00FF88]")}>Export Ledger</span>
-                  <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Generate encrypted JSON backup</span>
+                  <span className={cn("text-[10px] font-bold uppercase tracking-widest", isSimulationMode ? "text-sky-400" : "text-white")}>Export Data</span>
+                  <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Download your activity log as JSON</span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40">
                   <ArrowUpRight size={14} />
@@ -848,20 +845,20 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
 
         {/* PWA Installation Section */}
         <div className="space-y-4">
-          <label className="small-caps ml-1 !text-white/20">Operational Container</label>
-          <div className="bento-card p-6 bg-[#00FF88]/5 border-[#00FF88]/10 space-y-4 shadow-xl shadow-black">
+          <label className="small-caps ml-1 !text-white/20">Preferences</label>
+          <div className="bento-card p-6 bg-white/[0.02] border border-white/10 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#00FF88]/10 border border-[#00FF88]/20 flex items-center justify-center text-[#00FF88] shadow-[0_0_20px_rgba(0,255,136,0.1)]">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
                 <Plus size={24} strokeWidth={1.5} />
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-base font-light tracking-tight text-[#00FF88]">Protocol Native</h3>
-                <p className="text-[8px] text-white/20 uppercase tracking-[0.2em] font-bold">Standalone APK Equivalent</p>
+                <h3 className="text-base font-light tracking-tight text-white">Save to Device</h3>
+                <p className="text-[8px] text-white/20 uppercase tracking-[0.2em] font-bold">App Installation</p>
               </div>
             </div>
             
             <p className="text-[10px] font-light text-white/40 leading-relaxed uppercase tracking-wide">
-              Install the protocol directly to your device home screen for low-latency native experience.
+              Install this tracker directly to your device home screen for a seamless native experience.
             </p>
 
             <div className="space-y-3 pt-2">
@@ -876,7 +873,7 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
             </div>
 
             <div className="pt-3 flex justify-between items-center border-t border-white/5 mt-2">
-              <span className="text-[7px] font-bold text-white/10 uppercase tracking-[0.3em]">Neural Package: standby</span>
+            <span className="text-[7px] font-bold text-white/10 uppercase tracking-[0.3em]">Sync status: optimal</span>
               <div className="flex gap-1">
                 <div className="w-1 h-1 rounded-full bg-[#00FF88]" />
                 <div className="w-1 h-1 rounded-full bg-[#00FF88]/40" />
@@ -890,11 +887,11 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
           <label className="small-caps ml-1 !text-white/20">Biometrics</label>
           <div className="grid grid-cols-2 gap-3">
             <div className="bento-card !p-3.5 text-center !bg-[#0a0a0a]">
-              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Heart Variance</span>
+              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Heart Rate</span>
               <span className="text-xs font-mono text-[#00FF88]/40 tracking-wider">OFFLINE</span>
             </div>
             <div className="bento-card !p-3.5 text-center !bg-[#0a0a0a]">
-              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Neural Load</span>
+              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Daily Load</span>
               <span className="text-xs font-mono text-[#00FF88]/40 tracking-wider">STANDBY</span>
             </div>
           </div>
@@ -908,8 +905,8 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
               <span className="text-[9px] font-mono text-white/30 tracking-tighter">7.A.4</span>
             </div>
             <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 text-center col-span-2">
-              <span className="text-[7px] font-bold text-white/10 uppercase block mb-0.5">Infrastructure</span>
-              <span className="text-[9px] font-mono text-white/30 tracking-tighter uppercase">Edge Protocol / Apex</span>
+              <span className="text-[7px] font-bold text-white/10 uppercase block mb-0.5">System Architecture</span>
+              <span className="text-[9px] font-mono text-white/30 tracking-tighter uppercase">Unified Tracking Core</span>
             </div>
           </div>
         </div>
@@ -918,41 +915,42 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
   );
 }
 
-function ProtocolTab({ selectedDate, onDateChange, addFood, addWorkout, addSleep, addTask }: { 
+function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, addWorkout, addSleep, addTask }: { 
   selectedDate: Date, 
   onDateChange: (d: Date) => void,
   addFood: (meal: FoodEntry['meal'], desc: string, nutrition?: any, date?: Date) => void, 
+  addWater: (amount: number, date?: Date) => void,
   addWorkout: (activity: string, calories: number, duration?: number, date?: Date) => void, 
-  addSleep: (duration: number, quality: number, date?: Date) => void,
+  addSleep: (duration: number, quality: number, category: 'Sleep' | 'Nap', date?: Date) => void,
   addTask: (desc: string, date?: Date) => void,
 }) {
-  const [activeModule, setActiveModule] = useState<'intake' | 'activity' | 'sleep' | 'tasks'>('intake');
+  const [activeModule, setActiveModule] = useState<'intake' | 'water' | 'activity' | 'sleep'>('intake');
 
   const modules = [
-    { id: 'intake', label: 'Fuel', icon: <Utensils size={14} />, color: 'text-[#00FF88]' },
-    { id: 'activity', label: 'Kinetic', icon: <Flame size={14} />, color: 'text-orange-400' },
-    { id: 'sleep', label: 'Rest', icon: <Zap size={14} />, color: 'text-sky-400' },
-    { id: 'tasks', label: 'Goal', icon: <CheckSquare size={14} />, color: 'text-emerald-400' },
+    { id: 'intake', label: 'Nutrition', icon: <Utensils size={14} />, color: 'text-[#00FF88]' },
+    { id: 'water', label: 'Hydration', icon: <Droplets size={14} />, color: 'text-blue-500' },
+    { id: 'activity', label: 'Activity', icon: <Flame size={14} />, color: 'text-orange-500' },
+    { id: 'sleep', label: 'Sleep', icon: <Zap size={14} />, color: 'text-violet-400' },
   ] as const;
 
   return (
     <div className="px-5 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       <header className="space-y-4">
         <div>
-          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">System Input</span>
-          <h1 className="display-light">Protocol</h1>
+          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Quick Entry</span>
+          <h1 className="display-light">Journal</h1>
         </div>
         <DateNavigator selectedDate={selectedDate} onDateChange={onDateChange} />
       </header>
 
       {/* Module Selector - Segmented Control */}
-      <div className="p-1.5 bg-[#111] border border-white/5 rounded-[24px] flex gap-1 shadow-2xl shadow-black/50">
+      <div className="p-1.5 bg-[#111] border border-white/5 rounded-[24px] flex gap-1 shadow-2xl shadow-black/50 overflow-x-auto no-scrollbar">
         {modules.map(mod => (
           <button
             key={mod.id}
             onClick={() => setActiveModule(mod.id)}
             className={cn(
-              "flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1.5 transition-all duration-500 relative overflow-hidden",
+              "flex-1 min-w-[70px] py-2.5 rounded-2xl flex flex-col items-center gap-1.5 transition-all duration-500 relative overflow-hidden",
               activeModule === mod.id ? "text-white" : "text-white/10 hover:text-white/30"
             )}
           >
@@ -986,11 +984,24 @@ function ProtocolTab({ selectedDate, onDateChange, addFood, addWorkout, addSleep
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <Utensils size={12} className="text-[#00FF88]" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Fuel Intake</span>
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Add Meal</span>
                   </div>
-                  <span className="text-[8px] font-mono text-white/10 italic">NUTRITION_BUFFER_01</span>
+                  <span className="text-[8px] font-mono text-white/10 italic">Module 01</span>
                 </div>
                 <FoodQuickAdd onAdd={(m, d, n) => addFood(m, d, n, selectedDate)} />
+              </div>
+            )}
+
+            {activeModule === 'water' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <Droplets size={12} className="text-blue-400" />
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Add Water</span>
+                  </div>
+                  <span className="text-[8px] font-mono text-white/10 italic">Module 02</span>
+                </div>
+                <WaterQuickAdd onAdd={(a) => addWater(a, selectedDate)} />
               </div>
             )}
 
@@ -998,10 +1009,10 @@ function ProtocolTab({ selectedDate, onDateChange, addFood, addWorkout, addSleep
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <Flame size={12} className="text-orange-400" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Kinetic Record</span>
+                    <Flame size={12} className="text-orange-500" />
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Log Activity</span>
                   </div>
-                  <span className="text-[8px] font-mono text-white/10 italic">EXERTION_MODULE_02</span>
+                  <span className="text-[8px] font-mono text-white/10 italic">Module 03</span>
                 </div>
                 <WorkoutQuickAdd onAdd={(a, c, du) => addWorkout(a, c, du, selectedDate)} />
               </div>
@@ -1011,25 +1022,12 @@ function ProtocolTab({ selectedDate, onDateChange, addFood, addWorkout, addSleep
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <Zap size={12} className="text-sky-400" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Regeneration</span>
+                    <Zap size={12} className="text-violet-400" />
+                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Log Sleep</span>
                   </div>
-                  <span className="text-[8px] font-mono text-white/10 italic">NEURAL_CYCLES_03</span>
+                  <span className="text-[8px] font-mono text-white/10 italic">Module 04</span>
                 </div>
-                <SleepQuickAdd onAdd={(dur, qual) => addSleep(dur, qual, selectedDate)} />
-              </div>
-            )}
-
-            {activeModule === 'tasks' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <CheckSquare size={12} className="text-emerald-400" />
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">New Objective</span>
-                  </div>
-                  <span className="text-[8px] font-mono text-white/10 italic">GOAL_SET_04</span>
-                </div>
-                <TaskQuickAdd onAdd={(desc) => addTask(desc, selectedDate)} />
+                <SleepQuickAdd onAdd={(dur, qual, cat) => addSleep(dur, qual, cat, selectedDate)} />
               </div>
             )}
           </motion.div>
@@ -1038,62 +1036,126 @@ function ProtocolTab({ selectedDate, onDateChange, addFood, addWorkout, addSleep
       
       <div className="bento-card bg-white/[0.01] border-white/5 p-6 text-center">
         <p className="text-[8px] text-white/10 uppercase tracking-[0.3em] font-medium italic">
-          High-fidelity data synchronization verified
+          Local data is synchronized
         </p>
       </div>
     </div>
   );
 }
 
-function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: number) => void }) {
-  const [duration, setDuration] = useState('');
+function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: number, category: 'Sleep' | 'Nap') => void }) {
+  const [hours, setHours] = useState(8);
+  const [minutes, setMinutes] = useState(0);
   const [quality, setQuality] = useState(7);
+  const [category, setCategory] = useState<'Sleep' | 'Nap'>('Sleep');
+  const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = () => {
-    if (!duration) return;
-    onAdd(parseFloat(duration), quality);
-    setDuration('');
-    setQuality(7);
+  const duration = hours + minutes / 60;
+
+  const handleSave = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    onAdd(duration, quality, category);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   return (
-    <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 p-4 space-y-4 focus-within:border-white/10 transition-all duration-500">
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex-1 space-y-1">
-          <div className="flex items-baseline gap-1">
-            <input 
-              type="number" 
-              step="0.5"
-              placeholder="0.0"
-              value={duration}
-              onChange={e => setDuration(e.target.value)}
-              className="w-16 bg-transparent border-none outline-none text-2xl font-light text-sky-400 placeholder:text-sky-400/10"
-            />
-            <span className="text-[8px] font-bold tracking-[0.1em] text-white/20 uppercase">HOURS SLEPT</span>
-          </div>
-        </div>
-        
-        <div className="flex-1 space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Quality</span>
-            <span className="text-xs font-mono text-sky-400/80">{quality}/10</span>
+    <div className="bg-[#080808] rounded-[32px] border border-white/5 p-6 space-y-8 transition-all duration-500 shadow-3xl shadow-black focus-within:border-violet-500/20">
+      
+      {/* Category Toggle */}
+      <div className="flex bg-white/5 p-1 rounded-2xl">
+        <button
+          onClick={() => {
+            setCategory('Sleep');
+            if (hours === 0 && minutes === 0) setHours(8);
+          }}
+          className={cn(
+            "flex-1 py-2 text-[8px] font-bold uppercase tracking-widest rounded-xl transition-all",
+            category === 'Sleep' ? "bg-indigo-600 text-white shadow-lg" : "text-white/20 hover:text-white/40"
+          )}
+        >
+          Night Sleep
+        </button>
+        <button
+          onClick={() => {
+            setCategory('Nap');
+            if (hours > 2) setHours(0);
+            if (minutes === 0) setMinutes(30);
+          }}
+          className={cn(
+            "flex-1 py-2 text-[8px] font-bold uppercase tracking-widest rounded-xl transition-all",
+            category === 'Nap' ? "bg-violet-400 text-black shadow-lg" : "text-white/20 hover:text-white/40"
+          )}
+        >
+          Power Nap
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8">
+        {/* Hours Selector */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-baseline px-1">
+            <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.4em]">Duration: Hours</span>
+            <span className="text-3xl font-light tracking-tighter text-white">{hours}<span className="text-xs text-white/20 ml-1 uppercase font-bold tracking-widest">h</span></span>
           </div>
           <input 
             type="range" 
-            min="1" 
-            max="10" 
-            value={quality}
-            onChange={e => setQuality(parseInt(e.target.value))}
-            className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-[#00FF88]"
+            min="0" 
+            max={category === 'Sleep' ? 16 : 4} 
+            step="1"
+            value={hours}
+            onChange={e => setHours(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-violet-400"
           />
         </div>
 
+        {/* Minutes Selector */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-baseline px-1">
+            <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.4em]">Duration: Minutes</span>
+            <span className="text-2xl font-light tracking-tighter text-white/60">{minutes}<span className="text-[10px] text-white/10 ml-1 uppercase font-bold tracking-widest">m</span></span>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="59" 
+            step="1"
+            value={minutes}
+            onChange={e => setMinutes(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-violet-300"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-4 border-t border-white/5">
+        <div className="flex gap-2">
+          {[2, 4, 6, 8, 10].map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => setQuality(q)}
+              className={cn(
+                "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                quality >= q ? "bg-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.5)]" : "bg-white/5 hover:bg-white/10"
+              )}
+            />
+          ))}
+        </div>
+
         <button 
-          onClick={handleSave}
-          disabled={!duration}
-          className="w-10 h-10 rounded-full bg-sky-400/5 text-sky-400 border border-sky-400/10 flex items-center justify-center disabled:opacity-5 transition-all hover:bg-sky-400 hover:text-black shrink-0"
+          type="button"
+          onClick={(e) => handleSave(e)}
+          className={cn(
+            "px-10 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 active:scale-95 shadow-xl",
+            isSaved 
+              ? "bg-[#00FF88] text-black shadow-[#00FF88]/20" 
+              : "bg-violet-500 text-white hover:bg-white hover:text-black shadow-violet-500/20"
+          )}
         >
-          <Plus size={18} strokeWidth={1.5} />
+          {isSaved ? 'Saved' : 'Save Entry'}
         </button>
       </div>
     </div>
@@ -1175,9 +1237,9 @@ function MatrixTab({ entries, onDateSelect }: { entries: LogEntry[], onDateSelec
                 </span>
                 
                 <div className="flex gap-0.5 flex-wrap justify-center w-full">
-                  {hasFood && <div className="w-1 h-1 rounded-full bg-sky-400/60" />}
-                  {hasWorkout && <div className="w-1 h-1 rounded-full bg-orange-400/60" />}
-                  {hasTasks && <div className={cn("w-1 h-1 rounded-full", allTasksDone ? "bg-emerald-400" : "bg-white/20")} />}
+                  {hasFood && <div className="w-1 h-1 rounded-full bg-cyan-400/60" />}
+                  {hasWorkout && <div className="w-1 h-1 rounded-full bg-orange-500/60" />}
+                  {hasTasks && <div className={cn("w-1 h-1 rounded-full", allTasksDone ? "bg-[#00FF88]" : "bg-white/20")} />}
                 </div>
 
                 {count > 0 && isSelectedMonth && (
@@ -1194,15 +1256,15 @@ function MatrixTab({ entries, onDateSelect }: { entries: LogEntry[], onDateSelec
         {/* Legend */}
         <div className="flex justify-center gap-6 py-4 bg-white/[0.02] rounded-3xl border border-white/[0.04]">
            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-sky-400/60" />
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60" />
               <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Intake</span>
            </div>
            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-400/60" />
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500/60" />
               <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Activity</span>
            </div>
            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88]" />
               <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Full Focus</span>
            </div>
         </div>
@@ -1217,7 +1279,7 @@ function MatrixTab({ entries, onDateSelect }: { entries: LogEntry[], onDateSelec
            <span className="text-[8px] font-bold text-white/10 uppercase tracking-[0.2em] text-center">30D Workouts</span>
         </div>
         <div className="bento-card p-4 flex flex-col items-center justify-center gap-2 bg-white/[0.02]">
-           <span className="text-2xl font-light text-sky-400">
+           <span className="text-2xl font-light text-cyan-400">
               {entries.filter(e => e.type === 'food' && e.timestamp > subDays(new Date(), 30).getTime()).length}
            </span>
            <span className="text-[8px] font-bold text-white/10 uppercase tracking-[0.2em] text-center">30D Records</span>
@@ -1309,44 +1371,213 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
           dataKey="name" 
           axisLine={false} 
           tickLine={false} 
-          tick={{ fill: '#ffffff10', fontSize: 8, fontWeight: 700 }}
+          tick={{ fontSize: 9, fill: '#ffffff20' }} 
           dy={10}
         />
-        <YAxis 
-          axisLine={false} 
-          tickLine={false} 
-          tick={{ fill: '#ffffff10', fontSize: 8, fontWeight: 700 }}
-        />
+        <YAxis hide />
         <Tooltip 
-          contentStyle={{ 
-            backgroundColor: '#111', 
-            border: '1px solid rgba(255,255,255,0.05)', 
-            borderRadius: '12px',
-            fontSize: '10px'
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-[#111] border border-white/10 p-3 rounded-2xl shadow-2xl">
+                  <p className="text-[10px] font-bold text-white/40 uppercase mb-2">Summary</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-[9px] text-[#00FF88] uppercase">Nutrition</span>
+                      <span className="text-[10px] font-mono text-white">{payload[0].value} kcal</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-[9px] text-orange-400 uppercase">Activity</span>
+                      <span className="text-[10px] font-mono text-white">{payload[1].value} kcal</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
           }}
-          itemStyle={{ padding: '0' }}
-          cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
         />
         <Area 
           type="monotone" 
           dataKey="intake" 
           stroke="#00FF88" 
-          strokeWidth={2}
           fillOpacity={1} 
           fill="url(#colorIntake)" 
-          animationDuration={1500}
+          strokeWidth={2}
+          animationDuration={2000}
         />
         <Area 
           type="monotone" 
           dataKey="activity" 
           stroke="#FB923C" 
-          strokeWidth={2}
           fillOpacity={1} 
-          fill="url(#colorActivity)"
-          animationDuration={1500}
+          fill="url(#colorActivity)" 
+          strokeWidth={2}
+          animationDuration={2500}
         />
       </AreaChart>
     </ResponsiveContainer>
+  );
+}
+
+function PerformanceModal({ isOpen, onClose, entries, selectedDate }: { isOpen: boolean, onClose: () => void, entries: LogEntry[], selectedDate: Date }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-0.5">
+                <span className="small-caps !text-[#00FF88] text-[8px] !tracking-[0.3em]">Insights</span>
+                <h2 className="text-xl font-light tracking-tight uppercase">Performance</h2>
+              </div>
+              <button 
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex gap-6 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#00FF88] shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Intake</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.5)]" />
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Activity</span>
+              </div>
+            </div>
+
+            <div className="h-64 mb-4">
+              <PerformanceGraph entries={entries} selectedDate={selectedDate} />
+            </div>
+
+            <p className="text-[8px] text-center text-white/10 uppercase tracking-[0.2em] font-bold py-2 border-t border-white/5">
+              Synchronized with local persistence buffer
+            </p>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean, onClose: () => void, entries: LogEntry[] }) {
+  const last30Days = useMemo(() => {
+    const today = startOfToday();
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      days.push(subDays(today, i));
+    }
+    return days;
+  }, []);
+
+  const dayStats = useMemo(() => {
+    return last30Days.map(date => {
+      const dayEntries = entries.filter(e => isSameDay(e.timestamp, date));
+      const tasks = dayEntries.filter(e => e.type === 'task') as TaskEntry[];
+      const completed = tasks.filter(t => t.completed).length;
+      const total = tasks.length;
+      const ratio = total > 0 ? completed / total : 0;
+      return { date, ratio, total, completed };
+    });
+  }, [entries, last30Days]);
+
+  const streak = useMemo(() => {
+    let currentStreak = 0;
+    const sortedDays = [...dayStats].reverse();
+    for (const day of sortedDays) {
+      if (day.total > 0 && day.completed === day.total) {
+        currentStreak++;
+      } else if (isToday(day.date)) {
+        continue;
+      } else {
+        break;
+      }
+    }
+    return currentStreak;
+  }, [dayStats]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-0.5">
+                <span className="small-caps !text-[#00FF88] text-[8px] !tracking-[0.3em]">Progress Tracker</span>
+                <h2 className="text-xl font-light tracking-tight uppercase">Consistency</h2>
+              </div>
+              <button 
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-6 mb-8 p-4 bg-[#00FF88]/5 border border-[#00FF88]/10 rounded-2xl">
+              <div className="w-12 h-12 rounded-full bg-[#00FF88]/10 flex items-center justify-center text-[#00FF88]">
+                <Zap size={24} fill="currentColor" />
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Active Streak</span>
+                <p className="text-3xl font-light tracking-tighter">{streak} <span className="text-xs text-white/20 uppercase font-bold tracking-[0.2em] ml-1">Days</span></p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 mb-8">
+              {dayStats.map((day, i) => (
+                <div key={i} className="flex flex-col items-center gap-1">
+                   <div 
+                    title={`${format(day.date, 'MMM d')}: ${day.completed}/${day.total} goals`}
+                    className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-mono transition-all duration-500",
+                      day.total === 0 ? "bg-white/[0.02] border border-white/5 text-white/10" : 
+                      day.ratio === 1 ? "bg-[#00FF88] text-black shadow-[0_0_20px_rgba(0,255,136,0.2)]" :
+                      day.ratio > 0 ? "bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/20" :
+                      "bg-rose-500/10 text-rose-500/40 border border-rose-500/10"
+                    )}
+                  >
+                    {format(day.date, 'd')}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[8px] text-center text-white/10 uppercase tracking-[0.2em] font-bold py-2 border-t border-white/5">
+              Data is synchronized
+            </p>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -1439,23 +1670,37 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
           >
             <div className="grid grid-cols-5 gap-1.5 px-2 pb-3">
               {[
-                { label: 'CAL', key: 'calories', color: 'text-white' },
-                { label: 'PRO', key: 'protein', color: 'text-sky-400' },
-                { label: 'CHO', key: 'carbs', color: 'text-amber-400' },
-                { label: 'FAT', key: 'fat', color: 'text-rose-400' },
-                { label: 'FIB', key: 'fiber', color: 'text-emerald-400' }
-              ].map(m => (
+              { label: 'CAL', key: 'calories', color: 'text-white' },
+              { label: 'PRO', key: 'protein', color: 'text-indigo-400' },
+              { label: 'FIB', key: 'fiber', color: 'text-emerald-400' },
+              { label: 'FAT', key: 'fat', color: 'text-rose-500' },
+              { label: 'CHO', key: 'carbs', color: 'text-orange-400' }
+            ].map(m => (
                 <div key={m.key} className="space-y-1">
                   <span className={cn("text-[7px] font-bold tracking-[0.15em] block text-center opacity-40 uppercase", m.color)}>{m.label}</span>
                   <input 
                     type="number"
                     value={(macros as any)[m.key]}
                     onChange={e => setMacros(prev => ({ ...prev, [m.key]: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/5 rounded-lg py-1.5 text-center text-[10px] font-medium outline-none"
+                    className={cn("w-full bg-white/5 border border-white/5 rounded-lg py-1.5 text-center text-[10px] font-medium outline-none transition-colors focus:border-white/20", m.color)}
                     placeholder="0"
                   />
                 </div>
               ))}
+            </div>
+            
+            {/* Target protein visual assist */}
+            <div className="px-4 pb-3 space-y-1.5">
+               <div className="flex justify-between items-center">
+                 <span className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Protein Intensity</span>
+                 <span className="text-[7px] font-mono text-indigo-400">{macros.protein || 0}g / 90g</span>
+               </div>
+               <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                 <div 
+                   className="h-full bg-indigo-400 transition-all duration-500" 
+                   style={{ width: `${Math.min((parseInt(macros.protein || '0') / 90) * 100, 100)}%` }}
+                 />
+               </div>
             </div>
           </motion.div>
         )}
@@ -1497,6 +1742,66 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
           <Plus size={20} strokeWidth={2} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function WaterQuickAdd({ onAdd }: { onAdd: (amount: number) => void }) {
+  const [amount, setAmount] = useState(250);
+  const [isSaved, setIsSaved] = useState(false);
+
+  const presets = [150, 250, 330, 500];
+
+  const handleSave = () => {
+    onAdd(amount);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  return (
+    <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 p-6 space-y-6 transition-all duration-500 focus-within:border-white/10 shadow-3xl shadow-black shadow-black shadow-black shadow-black shadow-black">
+      <div className="space-y-4">
+        <div className="flex justify-between items-baseline px-1">
+          <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.4em]">Volume</span>
+          <span className="text-3xl font-light tracking-tighter text-blue-400">{amount}<span className="text-xs text-blue-400/20 ml-1 uppercase font-bold tracking-widest">ml</span></span>
+        </div>
+        <input 
+          type="range" 
+          min="50" 
+          max="1000" 
+          step="50"
+          value={amount}
+          onChange={e => setAmount(parseInt(e.target.value))}
+          className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-400"
+        />
+        <div className="flex justify-between gap-2 overflow-x-auto no-scrollbar pt-2">
+          {presets.map(p => (
+            <button
+              key={p}
+              onClick={() => setAmount(p)}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-xl text-[9px] font-mono transition-all border",
+                amount === p ? "bg-blue-400/20 border-blue-400/40 text-blue-400" : "bg-white/5 border-white/5 text-white/30 hover:bg-white/10"
+              )}
+            >
+              {p}ml
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button 
+        type="button"
+        onClick={handleSave}
+        className={cn(
+          "w-full py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 active:scale-95 shadow-xl",
+          isSaved 
+            ? "bg-[#00FF88] text-black shadow-[#00FF88]/20" 
+            : "bg-blue-500 text-white hover:bg-white hover:text-black shadow-blue-500/20"
+        )}
+      >
+        {isSaved ? 'Hydration Authenticated' : 'Log Intake'}
+      </button>
     </div>
   );
 }
@@ -1589,9 +1894,17 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
             <div className="w-[1px] h-1.5 bg-white/5" />
             <span className={cn(
               "text-[8px] font-bold tracking-[0.2em] uppercase",
-              entry.type === 'food' ? "text-sky-400/40" : entry.type === 'workout' ? "text-orange-400/40" : "text-emerald-400/40"
+              entry.type === 'food' ? "text-[#00FF88]/40" : 
+              entry.type === 'workout' ? "text-orange-500/40" : 
+              entry.type === 'water' ? "text-blue-500/40" :
+              entry.type === 'sleep' ? "text-violet-400/40" :
+              "text-[#00FF88]/40"
             )}>
-              {entry.type === 'food' ? entry.meal : entry.type === 'workout' ? 'Workout' : 'Task'}
+              {entry.type === 'food' ? entry.meal : 
+               entry.type === 'workout' ? 'Workout' : 
+               entry.type === 'water' ? 'Hydration' :
+               entry.type === 'sleep' ? 'Regeneration' :
+               'Goal'}
             </span>
          </div>
          <button onClick={onDelete} className="opacity-0 group-hover:opacity-100 text-white/5 hover:text-red-500 transition-all duration-300 transform scale-90">
@@ -1619,7 +1932,7 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
                          {item.macros?.calories ?? 0}
                          <small className="text-[6px] ml-0.5 opacity-30 uppercase font-sans">kcal</small>
                        </span>
-                       <span className="text-sky-400/20 font-mono tracking-tighter tabular-nums">
+                       <span className="text-indigo-400/20 font-mono tracking-tighter tabular-nums">
                          {item.macros?.protein ?? 0}g
                        </span>
                      </div>
@@ -1628,13 +1941,14 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
                </div>
              )}
 
-             {(entry.protein || entry.carbs || entry.fat || entry.calories) ? (
+             {(entry.protein || entry.carbs || entry.fat || entry.calories || entry.fiber) ? (
                <div className="flex gap-3 pt-1">
                  {[
                    { label: 'kcal', val: entry.calories, color: 'text-white' },
-                   { label: 'p', val: entry.protein, color: 'text-sky-400' },
-                   { label: 'c', val: entry.carbs, color: 'text-amber-400' },
+                   { label: 'p', val: entry.protein, color: 'text-indigo-400' },
+                   { label: 'fib', val: entry.fiber, color: 'text-emerald-400' },
                    { label: 'f', val: entry.fat, color: 'text-rose-400' },
+                   { label: 'c', val: entry.carbs, color: 'text-amber-400' },
                  ].filter(m => m.val).map(m => (
                    <div key={m.label} className="flex items-baseline gap-0.5">
                      <span className={cn("text-xs font-light opacity-60", m.color)}>{m.val}</span>
@@ -1645,11 +1959,23 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
              ) : null}
           </div>
         )}
+        {entry.type === 'water' && (
+          <div className="flex justify-between items-end">
+             <div className="flex flex-col">
+               <span className="text-base font-extralight tracking-tight text-white/90">Water Intake</span>
+               <span className="text-[7px] text-white/10 uppercase tracking-widest mt-0.5">Hydration Protocol</span>
+             </div>
+             <div className="text-right">
+               <span className="text-xl font-light text-blue-500/80 leading-none mb-0.5 block">{entry.amount}</span>
+               <span className="text-[7px] font-bold tracking-widest text-white/10 uppercase">ml</span>
+             </div>
+          </div>
+        )}
         {entry.type === 'workout' && (
           <div className="flex justify-between items-end">
              <p className="text-lg font-extralight tracking-tight flex-1 pr-4 text-white/80">{entry.activity}</p>
              <div className="text-right">
-               <span className="text-xl font-light text-orange-400/80 leading-none mb-0.5 block">{entry.calories}</span>
+               <span className="text-xl font-light text-orange-500/80 leading-none mb-0.5 block">{entry.calories}</span>
                <span className="text-[7px] font-bold tracking-widest text-white/10 uppercase">Net Burn</span>
              </div>
           </div>
@@ -1657,15 +1983,17 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
         {entry.type === 'sleep' && (
           <div className="flex justify-between items-end">
              <div className="space-y-1">
-                <p className="text-lg font-extralight tracking-tight text-white/80">{entry.duration} Hours Sleep</p>
+                <p className="text-lg font-extralight tracking-tight text-white/80">
+                  {Math.floor(entry.duration)}h {Math.round((entry.duration % 1) * 60)}m {entry.category || 'Sleep'}
+                </p>
                 <div className="flex gap-1.5">
                   {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={i} className={cn("w-2 h-1 rounded-full", i < entry.quality ? "bg-sky-400" : "bg-white/5")} />
+                    <div key={i} className={cn("w-2 h-1 rounded-full", i < entry.quality ? "bg-violet-400" : "bg-white/5")} />
                   ))}
                 </div>
              </div>
              <div className="text-right">
-               <span className="text-xl font-light text-sky-400/80 leading-none mb-0.5 block">{entry.quality}/10</span>
+               <span className="text-xl font-light text-violet-400/80 leading-none mb-0.5 block">{entry.quality}/10</span>
                <span className="text-[7px] font-bold tracking-widest text-white/10 uppercase">Quality Index</span>
              </div>
           </div>
