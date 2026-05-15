@@ -846,6 +846,46 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
           </div>
         </div>
 
+        {/* PWA Installation Section */}
+        <div className="space-y-4">
+          <label className="small-caps ml-1 !text-white/20">Operational Container</label>
+          <div className="bento-card p-6 bg-[#00FF88]/5 border-[#00FF88]/10 space-y-4 shadow-xl shadow-black">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#00FF88]/10 border border-[#00FF88]/20 flex items-center justify-center text-[#00FF88] shadow-[0_0_20px_rgba(0,255,136,0.1)]">
+                <Plus size={24} strokeWidth={1.5} />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-base font-light tracking-tight text-[#00FF88]">Protocol Native</h3>
+                <p className="text-[8px] text-white/20 uppercase tracking-[0.2em] font-bold">Standalone APK Equivalent</p>
+              </div>
+            </div>
+            
+            <p className="text-[10px] font-light text-white/40 leading-relaxed uppercase tracking-wide">
+              Install the protocol directly to your device home screen for low-latency native experience.
+            </p>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-start gap-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-mono shrink-0">01</div>
+                <p className="text-[10px] font-light text-white/60 leading-relaxed">Open mobile browser menu <span className="text-white/80">(Share icon on iOS / Three dots on Android)</span></p>
+              </div>
+              <div className="flex items-start gap-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-mono shrink-0">02</div>
+                <p className="text-[10px] font-light text-white/60 leading-relaxed">Select <span className="text-[#00FF88] font-medium">"Add to Home Screen"</span> or <span className="text-[#00FF88] font-medium">"Install App"</span></p>
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-between items-center border-t border-white/5 mt-2">
+              <span className="text-[7px] font-bold text-white/10 uppercase tracking-[0.3em]">Neural Package: standby</span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-[#00FF88]" />
+                <div className="w-1 h-1 rounded-full bg-[#00FF88]/40" />
+                <div className="w-1 h-1 rounded-full bg-[#00FF88]/10" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Biometrics</label>
           <div className="grid grid-cols-2 gap-3">

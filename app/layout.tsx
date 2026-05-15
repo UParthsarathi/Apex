@@ -8,8 +8,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'DailyLog',
-  description: 'Mobile-first daily tracker',
+  title: 'Apex Protocol',
+  description: 'High-fidelity biometric and performance tracking protocol.',
+  manifest: '/manifest.json',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+  themeColor: '#000000',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Apex Protocol',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
