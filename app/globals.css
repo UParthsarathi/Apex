@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  background-color: #000000;
+  color: #ffffff;
+  color-scheme: dark;
+  --font-sans: 'Inter', var(--font-sans), sans-serif;
+  --accent: #00FF88;
+}
+
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: #000000;
+}
+
+body {
+  @apply bg-black text-white antialiased selection:bg-white/10;
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Premium Typography Patterns */
+.small-caps {
+  @apply text-[10px] uppercase tracking-[0.2em] font-bold text-white/40;
+}
+
+.display-light {
+  @apply text-3xl font-extralight tracking-tighter text-white;
+}
+
+/* Refined Containers */
+.bento-card {
+  @apply bg-white/[0.03] border border-white/[0.04] rounded-2xl p-4 backdrop-blur-md transition-all duration-500 shadow-[0_4px_20px_rgba(0,0,0,0.3)];
+}
+
+.pill-border {
+  @apply border border-white/10 rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-white/50 transition-all hover:border-white/30 hover:text-white;
+}
+
+/* Atmospheric Effects */
+.bg-subtle-glow {
+  background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.03) 0%, transparent 80%);
+}
+
+.neon-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(0, 255, 136, 0.05), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 10s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
