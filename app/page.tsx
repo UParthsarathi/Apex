@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Home, History, CheckSquare, User, Flame, Utensils, ClipboardList, Trash2, Plus, X, Activity, ArrowUpRight, Zap, Target, Dna, Droplets, Wheat, CircleDot, Calendar, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
 import { useDailyLog, LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry } from '@/hooks/use-daily-log';
-import { format, isToday, isYesterday, isSameDay, startOfDay, subDays, addDays, eachDayOfInterval, startOfToday } from 'date-fns';
+import { format, isToday, isYesterday, isSameDay, startOfDay, subDays, addDays, eachDayOfInterval, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
@@ -333,16 +333,16 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
         </div>
         
         {/* Macronutrient Status */}
-        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-indigo-500/10 bg-indigo-500/[0.02] group">
+        <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-violet-500/10 bg-violet-500/[0.02] group">
            <div className="flex items-center justify-between">
-              <span className="small-caps !text-indigo-400/40 text-[8px] !tracking-[0.2em]">Protein</span>
-              <span className="text-base font-light font-mono tabular-nums text-indigo-100/80">{nutrition.protein}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
+              <span className="small-caps !text-violet-400/40 text-[8px] !tracking-[0.2em]">Protein</span>
+              <span className="text-base font-light font-mono tabular-nums text-violet-100/80">{nutrition.protein}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
            </div>
            <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min((nutrition.protein / 90) * 100, 100)}%` }}
-                className="h-full bg-indigo-400/80 shadow-[0_0_8px_rgba(129,140,248,0.3)]"
+                className="h-full bg-violet-400/80 shadow-[0_0_8px_rgba(167,139,250,0.3)]"
               />
            </div>
         </div>
@@ -409,14 +409,14 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
            <span className="text-[7px] font-bold tracking-[0.2em] text-rose-500/20 uppercase">Fats</span>
         </div>
 
-        <div className="col-span-2 bento-card p-3 flex items-center justify-center gap-4 bg-[#00FF88]/[0.02] border-[#00FF88]/10 group">
+        <div className="col-span-2 bento-card p-3 flex items-center justify-center gap-4 bg-indigo-500/[0.02] border-indigo-500/10 group">
            <div className="flex flex-col items-center">
               <span className="text-base font-light font-mono text-white/80 leading-tight">{completedTasks}<span className="text-white/20 mx-0.5">/</span>{tasks.length}</span>
               <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Goals</span>
            </div>
            <div className="w-[1px] h-6 bg-white/5" />
            <div className="flex flex-col items-center">
-              <span className="text-base font-light font-mono text-[#00FF88]/90 leading-tight">{tasks.length > 0 ? Math.round((completedTasks/tasks.length)*100) : 0}%</span>
+              <span className="text-base font-light font-mono text-indigo-400/90 leading-tight">{tasks.length > 0 ? Math.round((completedTasks/tasks.length)*100) : 0}%</span>
               <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Done</span>
            </div>
         </div>
@@ -729,6 +729,27 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
   onClearSimulation: () => void 
 }) {
   const [confirmClear, setConfirmClear] = useState<'none' | 'purge' | 'simulation'>('none');
+  const [copied, setCopied] = useState(false);
+  const [showTemplate, setShowTemplate] = useState(false);
+
+  const JSON_TEMPLATE = `{
+  "rawInput": "Meal description here",
+  "mealType": "Breakfast | Lunch | Snacks | Dinner",
+  "items": [
+    {
+      "name": "Component Name",
+      "quantity": { "value": 1, "unit": "serving" },
+      "macros": { "calories": 100, "protein": 10, "carbs": 10, "fat": 2, "fiber": 1 }
+    }
+  ],
+  "totals": {
+    "calories": 100,
+    "protein": 10,
+    "carbs": 10,
+    "fat": 2,
+    "fiber": 1
+  }
+}`;
 
   return (
     <div className="px-5 py-6 font-sans overflow-visible">
@@ -765,6 +786,48 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                   <ArrowUpRight size={14} />
                 </div>
              </button>
+
+             <div className="border-b border-white/5">
+               <button 
+                 onClick={() => setShowTemplate(!showTemplate)}
+                 className="w-full p-4 flex justify-between items-center hover:bg-sky-500/10 transition-all group active:bg-sky-500/20 cursor-pointer"
+               >
+                  <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-sky-400">JSON Protocol Format</span>
+                    <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Toggle format specifications</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-sky-400/5 flex items-center justify-center text-sky-400/40">
+                    <Dna size={14} className={cn("transition-transform duration-300", showTemplate && "rotate-180")} />
+                  </div>
+               </button>
+               
+               <AnimatePresence>
+                 {showTemplate && (
+                   <motion.div
+                     initial={{ height: 0, opacity: 0 }}
+                     animate={{ height: "auto", opacity: 1 }}
+                     exit={{ height: 0, opacity: 0 }}
+                     className="overflow-hidden bg-black/60 px-4 pb-4"
+                   >
+                     <div className="bg-white/5 rounded-xl p-3 border border-white/10 relative group">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON_TEMPLATE);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          className="absolute right-3 top-3 text-[7px] font-bold text-white/40 hover:text-sky-400 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md transition-colors"
+                        >
+                          {copied ? 'Copied' : 'Copy'}
+                        </button>
+                        <pre className="text-[9px] font-mono text-white/30 leading-snug overflow-x-auto no-scrollbar">
+                          {JSON_TEMPLATE}
+                        </pre>
+                     </div>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+             </div>
 
              {isSimulationMode ? (
                <button 
@@ -840,46 +903,6 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                   <Trash2 size={14} />
                 </div>
              </button>
-          </div>
-        </div>
-
-        {/* PWA Installation Section */}
-        <div className="space-y-4">
-          <label className="small-caps ml-1 !text-white/20">Preferences</label>
-          <div className="bento-card p-6 bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
-                <Plus size={24} strokeWidth={1.5} />
-              </div>
-              <div className="space-y-0.5">
-                <h3 className="text-base font-light tracking-tight text-white">Save to Device</h3>
-                <p className="text-[8px] text-white/20 uppercase tracking-[0.2em] font-bold">App Installation</p>
-              </div>
-            </div>
-            
-            <p className="text-[10px] font-light text-white/40 leading-relaxed uppercase tracking-wide">
-              Install this tracker directly to your device home screen for a seamless native experience.
-            </p>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
-                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-mono shrink-0">01</div>
-                <p className="text-[10px] font-light text-white/60 leading-relaxed">Open mobile browser menu <span className="text-white/80">(Share icon on iOS / Three dots on Android)</span></p>
-              </div>
-              <div className="flex items-start gap-4 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
-                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-mono shrink-0">02</div>
-                <p className="text-[10px] font-light text-white/60 leading-relaxed">Select <span className="text-[#00FF88] font-medium">"Add to Home Screen"</span> or <span className="text-[#00FF88] font-medium">"Install App"</span></p>
-              </div>
-            </div>
-
-            <div className="pt-3 flex justify-between items-center border-t border-white/5 mt-2">
-            <span className="text-[7px] font-bold text-white/10 uppercase tracking-[0.3em]">Sync status: optimal</span>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 rounded-full bg-[#00FF88]" />
-                <div className="w-1 h-1 rounded-full bg-[#00FF88]/40" />
-                <div className="w-1 h-1 rounded-full bg-[#00FF88]/10" />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1489,11 +1512,15 @@ function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean, onClo
   const dayStats = useMemo(() => {
     return last30Days.map(date => {
       const dayEntries = entries.filter(e => isSameDay(e.timestamp, date));
-      const tasks = dayEntries.filter(e => e.type === 'task') as TaskEntry[];
-      const completed = tasks.filter(t => t.completed).length;
-      const total = tasks.length;
-      const ratio = total > 0 ? completed / total : 0;
-      return { date, ratio, total, completed };
+      const food = dayEntries.filter(e => e.type === 'food') as FoodEntry[];
+      const protein = food.reduce((sum, f) => sum + (f.protein || 0), 0);
+      
+      // Logic: 50-90 target
+      let ratio = 0;
+      if (protein >= 90) ratio = 1;
+      else if (protein >= 50) ratio = 0.5;
+
+      return { date, ratio, protein };
     });
   }, [entries, last30Days]);
 
@@ -1501,7 +1528,7 @@ function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean, onClo
     let currentStreak = 0;
     const sortedDays = [...dayStats].reverse();
     for (const day of sortedDays) {
-      if (day.total > 0 && day.completed === day.total) {
+      if (day.ratio >= 0.5) {
         currentStreak++;
       } else if (isToday(day.date)) {
         continue;
@@ -1512,68 +1539,160 @@ function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean, onClo
     return currentStreak;
   }, [dayStats]);
 
+  const stats = useMemo(() => {
+    const perfectDays = dayStats.filter(d => d.ratio === 1).length;
+    const partialDays = dayStats.filter(d => d.ratio === 0.5).length;
+    const totalActiveDays = dayStats.filter(d => d.ratio > 0).length;
+    const consistencyRate = dayStats.length > 0 ? Math.round((totalActiveDays / dayStats.length) * 100) : 0;
+    return { perfectDays, partialDays, consistencyRate };
+  }, [dayStats]);
+
+  // Calendar logic
+  const calendarDays = useMemo(() => {
+    const startOfCurrentMonth = startOfMonth(new Date());
+    const daysInMonth = eachDayOfInterval({
+      start: startOfWeek(startOfCurrentMonth),
+      end: endOfWeek(endOfMonth(new Date()))
+    });
+    
+    return daysInMonth.map(date => {
+      const dayData = dayStats.find(d => isSameDay(d.date, date));
+      return {
+        date,
+        isCurrentMonth: isSameMonth(date, new Date()),
+        isToday: isToday(date),
+        ratio: dayData?.ratio || 0,
+        protein: dayData?.protein || 0
+      };
+    });
+  }, [dayStats]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-5">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
           />
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="w-full max-w-sm bg-[#0c0c0c] border border-white/10 rounded-[32px] p-7 shadow-3xl relative overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-8">
+            {/* Background Accent */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-violet-500/5 blur-[100px] rounded-full" />
+
+            <header className="flex items-center justify-between mb-8 relative z-10">
               <div className="space-y-0.5">
-                <span className="small-caps !text-[#00FF88] text-[8px] !tracking-[0.3em]">Progress Tracker</span>
-                <h2 className="text-xl font-light tracking-tight uppercase">Consistency</h2>
+                <span className="small-caps text-violet-400 !tracking-[0.4em] text-[8px]">Daily Momentum</span>
+                <h2 className="text-2xl font-extralight tracking-tighter uppercase leading-none">Consistency</h2>
               </div>
               <button 
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-95"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
+            </header>
+
+            {/* Main Streak Display */}
+            <div className="bento-card bg-white/[0.03] border-white/5 p-6 mb-8 flex items-center justify-between overflow-hidden relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="relative z-10">
+                <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block mb-1">Execution Streak</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extralight tracking-tighter text-white/90">{streak}</span>
+                  <span className="text-[8px] font-black text-violet-400 uppercase tracking-widest leading-none">Cycles</span>
+                </div>
+              </div>
+              <div className="text-right relative z-10">
+                <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em] block mb-1">Success Rate</span>
+                <span className="text-xl font-light text-violet-400/80 tabular-nums leading-none">{stats.consistencyRate}%</span>
+                <div className="text-[6px] text-white/10 uppercase font-black tracking-tighter mt-1">Anabolic Continuity</div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-6 mb-8 p-4 bg-[#00FF88]/5 border border-[#00FF88]/10 rounded-2xl">
-              <div className="w-12 h-12 rounded-full bg-[#00FF88]/10 flex items-center justify-center text-[#00FF88]">
-                <Zap size={24} fill="currentColor" />
-              </div>
-              <div className="space-y-0.5">
-                <span className="text-[7px] font-bold text-white/20 uppercase tracking-widest">Active Streak</span>
-                <p className="text-3xl font-light tracking-tighter">{streak} <span className="text-xs text-white/20 uppercase font-bold tracking-[0.2em] ml-1">Days</span></p>
-              </div>
+            {/* Momentum / Psychological Insight Section */}
+            <div className="mb-8 px-1">
+               <div className="flex items-center gap-2 mb-3">
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full border text-[7px] font-bold uppercase tracking-widest",
+                    streak >= 7 ? "bg-violet-400/10 border-violet-400/20 text-violet-400" : 
+                    streak >= 3 ? "bg-sky-500/10 border-sky-500/20 text-sky-400" :
+                    "bg-white/5 border-white/10 text-white/40"
+                  )}>
+                    {streak >= 7 ? "Apex State" : streak >= 3 ? "Momentum Locked" : "System Warming"}
+                  </div>
+                  <div className="h-[1px] flex-1 bg-white/5" />
+               </div>
+               <p className="text-[10px] font-light text-white/40 leading-relaxed italic">
+                 {streak >= 7 
+                   ? "You are currently in a high-density anabolic window. Neural pathways are optimized for discipline. Do not break the cycle."
+                   : streak >= 3 
+                   ? "Consistent protein synthesis detected. Psychological momentum is building. Your system is adapting to the protocol."
+                   : "Initial phase active. Focus on hitting the 50g protein floor to maintain continuity and trigger baseline metabolic response."}
+               </p>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 mb-8">
-              {dayStats.map((day, i) => (
-                <div key={i} className="flex flex-col items-center gap-1">
-                   <div 
-                    title={`${format(day.date, 'MMM d')}: ${day.completed}/${day.total} goals`}
+            {/* Proper Calendar Grid */}
+            <div className="mb-8 relative z-10">
+              <div className="flex justify-between items-center mb-5 px-1">
+                <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.3em]">{format(new Date(), 'MMMM yyyy')}</span>
+                <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-1">
+                     <div className="w-1.5 h-1.5 rounded-sm bg-violet-400" />
+                     <span className="text-[6px] font-bold text-white/20 uppercase">Target (90g+)</span>
+                   </div>
+                   <div className="flex items-center gap-1">
+                     <div className="w-1.5 h-1.5 rounded-sm bg-violet-400/20" />
+                     <span className="text-[6px] font-bold text-white/20 uppercase">Fair (50g+)</span>
+                   </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={`${day}-${i}`} className="text-[7px] font-bold text-white/10 text-center mb-2">{day}</div>
+                ))}
+                {calendarDays.map((day, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.01 }}
                     className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-mono transition-all duration-500",
-                      day.total === 0 ? "bg-white/[0.02] border border-white/5 text-white/10" : 
-                      day.ratio === 1 ? "bg-[#00FF88] text-black shadow-[0_0_20px_rgba(0,255,136,0.2)]" :
-                      day.ratio > 0 ? "bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/20" :
-                      "bg-rose-500/10 text-rose-500/40 border border-rose-500/10"
+                      "aspect-square rounded-md flex items-center justify-center transition-all duration-300 relative group",
+                      !day.isCurrentMonth ? "opacity-0 pointer-events-none" : "",
+                      day.protein === 0 ? "bg-white/[0.03]" : 
+                      day.ratio === 1 ? "bg-violet-400 text-black shadow-[0_0_10px_rgba(167,139,250,0.2)]" :
+                      day.ratio > 0 ? "bg-violet-400/20 text-violet-400/60" :
+                      "bg-rose-500/10 border border-rose-500/10 text-rose-500/40"
                     )}
                   >
-                    {format(day.date, 'd')}
-                  </div>
-                </div>
-              ))}
+                    <span className="text-[8px] font-mono leading-none">{format(day.date, 'd')}</span>
+                    {day.isToday && (
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0.5 h-0.5 bg-white/40 rounded-full" />
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
 
-            <p className="text-[8px] text-center text-white/10 uppercase tracking-[0.2em] font-bold py-2 border-t border-white/5">
-              Data is synchronized
-            </p>
+            <div className="flex items-center justify-between py-4 border-t border-white/5 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88] animate-pulse" />
+                <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em]">Neuro-Sync Active</span>
+              </div>
+              <p className="text-[7px] font-mono text-white/10 italic">
+                {streak > 0 ? 'Habit loop stabilized' : 'Awaiting baseline...'}
+              </p>
+            </div>
           </motion.div>
         </div>
       )}
@@ -1587,7 +1706,7 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
   const [showMacros, setShowMacros] = useState(false);
   const [macros, setMacros] = useState({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
 
-  const isJson = desc.trim().startsWith('{') && desc.trim().endsWith('}');
+  const isJson = (desc.trim().startsWith('{') && desc.trim().endsWith('}')) || (desc.trim().startsWith('[') && desc.trim().endsWith(']'));
   
   const handleSave = () => {
     if (!desc.trim()) return;
@@ -1596,27 +1715,42 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
     if (isJson) {
       try {
         const data = JSON.parse(desc.trim());
-        if (data.rawInput || data.items || data.totals) {
-          const nutrition = {
-            calories: data.totals?.calories || 0,
-            protein: data.totals?.protein || 0,
-            carbs: data.totals?.carbs || 0,
-            fat: data.totals?.fat || 0,
-            fiber: data.totals?.fiber || 0,
-            items: data.items || []
-          };
-          
-          // Map mealType to expected meal values
-          let detectedMeal = meal;
-          if (data.mealType) {
-            const m = data.mealType.toLowerCase();
-            if (m === 'breakfast') detectedMeal = 'Breakfast';
-            else if (m === 'lunch') detectedMeal = 'Lunch';
-            else if (m === 'snacks' || m === 'snack') detectedMeal = 'Snacks';
-            else if (m === 'dinner') detectedMeal = 'Dinner';
+        
+        const processEntry = (entryData: any) => {
+          if (entryData.rawInput || entryData.items || entryData.totals) {
+            // Calculate totals from items if totals is missing
+            const nutrition = {
+              calories: entryData.totals?.calories ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.calories || 0), 0) || 0),
+              protein: entryData.totals?.protein ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.protein || 0), 0) || 0),
+              carbs: entryData.totals?.carbs ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.carbs || 0), 0) || 0),
+              fat: entryData.totals?.fat ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.fat || 0), 0) || 0),
+              fiber: entryData.totals?.fiber ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.fiber || 0), 0) || 0),
+              items: entryData.items || []
+            };
+            
+            // Map mealType to expected meal values (fuzzy matching)
+            let detectedMeal = meal;
+            if (entryData.mealType) {
+              const m = entryData.mealType.toLowerCase();
+              if (m.includes('breakfast')) detectedMeal = 'Breakfast';
+              else if (m.includes('lunch')) detectedMeal = 'Lunch';
+              else if (m.includes('snacks') || m.includes('snack')) detectedMeal = 'Snacks';
+              else if (m.includes('dinner')) detectedMeal = 'Dinner';
+            }
+            
+            onAdd(detectedMeal, entryData.rawInput || "Encoded Component", nutrition);
+            return true;
           }
-          
-          onAdd(detectedMeal, data.rawInput || desc.trim(), nutrition);
+          return false;
+        };
+
+        if (Array.isArray(data)) {
+          data.forEach(processEntry);
+          setDesc('');
+          setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
+          setShowMacros(false);
+          return;
+        } else if (processEntry(data)) {
           setDesc('');
           setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
           setShowMacros(false);
@@ -1688,20 +1822,6 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
                 </div>
               ))}
             </div>
-            
-            {/* Target protein visual assist */}
-            <div className="px-4 pb-3 space-y-1.5">
-               <div className="flex justify-between items-center">
-                 <span className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Protein Intensity</span>
-                 <span className="text-[7px] font-mono text-indigo-400">{macros.protein || 0}g / 90g</span>
-               </div>
-               <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                 <div 
-                   className="h-full bg-indigo-400 transition-all duration-500" 
-                   style={{ width: `${Math.min((parseInt(macros.protein || '0') / 90) * 100, 100)}%` }}
-                 />
-               </div>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1709,13 +1829,15 @@ function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string
       <div className="flex items-center justify-between p-1 bg-black/20 rounded-[20px]">
         <div className="flex gap-1 overflow-x-auto no-scrollbar pl-1 flex-1 items-center">
           <button
-            onClick={() => setShowMacros(!showMacros)}
+            onClick={() => {
+              setShowMacros(!showMacros);
+            }}
             className={cn(
               "px-3 py-2 rounded-full text-[8px] font-bold tracking-[0.1em] uppercase transition-all duration-300",
               showMacros ? "bg-white/20 text-white" : "bg-white/5 text-white/40"
             )}
           >
-            {showMacros ? 'Back' : 'Macros'}
+            Manual
           </button>
 
           <div className="w-[1px] h-3 bg-white/10 mx-1" />

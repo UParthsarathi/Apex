@@ -252,6 +252,11 @@ export function useDailyLog() {
       meals.forEach(m => {
         const mealTime = new Date(baseTime);
         mealTime.setHours(m.hour, Math.floor(Math.random() * 60));
+        // Ensure some days are partial (50-80) and some are full (>80)
+        // Adjust protein based on day index to create a visible streak
+        const dayFactor = (i % 7 === 0) ? 0.4 : 1.0; // Every 7th day is a low protein day (break streak maybe?)
+        const protein = Math.floor((m.cals / 12) * dayFactor); 
+        
         mockEntries.push({
           id: uuidv4(),
           type: 'food',
@@ -259,7 +264,7 @@ export function useDailyLog() {
           meal: m.meal,
           description: m.desc,
           calories: m.cals,
-          protein: Math.floor(m.cals / 15),
+          protein,
           carbs: Math.floor(m.cals / 10),
           fat: Math.floor(m.cals / 30),
           fiber: 5,
