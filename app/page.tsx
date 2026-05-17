@@ -892,11 +892,11 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                )}
              >
                 <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", confirmClear === 'purge' ? "text-red-500" : "text-red-400/40")}>
-                    {confirmClear === 'purge' ? 'Confirm Total Purge' : 'Terminate Buffer'}
+                  <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", confirmClear === 'purge' ? "text-red-500" : "text-red-500/60")}>
+                    {confirmClear === 'purge' ? 'Confirm Full Deletion' : 'Delete All Local Data'}
                   </span>
                   <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">
-                    {confirmClear === 'purge' ? 'Tap again to confirm destruction' : 'Purge all local records permanently'}
+                    {confirmClear === 'purge' ? 'Tap again to erase all history' : 'Permanently remove all activity records'}
                   </span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-red-400/5 flex items-center justify-center text-red-500/20">
@@ -2029,7 +2029,7 @@ function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => vo
                'Goal'}
             </span>
          </div>
-         <button onClick={onDelete} className="opacity-0 group-hover:opacity-100 text-white/5 hover:text-red-500 transition-all duration-300 transform scale-90">
+         <button onClick={onDelete} className="text-white/20 hover:text-red-500 transition-all duration-300 transform active:scale-110">
            <Trash2 size={12} />
          </button>
       </div>
