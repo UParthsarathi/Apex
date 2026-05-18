@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, signUp } from '@/backend/auth';
+import { signIn, signUp, signInAnonymously } from '@/backend/auth';
 import { motion } from 'motion/react';
 import { Lock, User } from 'lucide-react';
 
@@ -19,9 +19,33 @@ export default function LoginPage() {
   };
 
   const handleSignUp = async () => {
-    const { error } = await signUp(email, password);
-    if (error) setError(error.message);
-    else router.push('/');
+    if (!email || !password) {
+      setError('Email and password are required for registration.');
+      return;
+    }
+    setError(null);
+    const { data, error } = await signUp(email, password);
+    if (error) {
+      setError(error.message);
+    } else if (data?.user && !data.session) {
+      setError('Registration successful! Please check your email for a confirmation link before signing in.');
+    } else {
+      router.push('/');
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setError(null);
+    const { error } = await signInAnonymously();
+    if (error) {
+      if (error.message.includes('anonymous')) {
+        setError('Guest access is not enabled in the security settings. Please authorize via email.');
+      } else {
+        setError(error.message);
+      }
+    } else {
+      router.push('/');
+    }
   };
 
   return (
@@ -60,21 +84,30 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <p className="text-[10px] text-red-500 uppercase tracking-widest text-center">{error}</p>
+          <p className="text-[10px] text-red-500 uppercase tracking-widest text-center px-4 leading-relaxed font-bold">{error}</p>
         )}
 
-        <div className="flex gap-3">
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <button 
+              onClick={handleSignIn} 
+              className="flex-1 bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 transition-all active:scale-[0.98]"
+            >
+              Sign In
+            </button>
+            <button 
+              onClick={handleSignUp} 
+              className="flex-1 bg-white/5 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-white/10 transition-all active:scale-[0.98]"
+            >
+              Sign Up
+            </button>
+          </div>
+          
           <button 
-            onClick={handleSignIn} 
-            className="flex-1 bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 transition-all active:scale-[0.98]"
+            onClick={handleGuestSignIn} 
+            className="w-full bg-white/[0.02] border border-white/5 text-white/40 text-[9px] font-bold uppercase tracking-[0.3em] py-4 rounded-2xl hover:bg-white/5 transition-all active:scale-[0.98]"
           >
-            Sign In
-          </button>
-          <button 
-            onClick={handleSignUp} 
-            className="flex-1 bg-white/5 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-white/10 transition-all active:scale-[0.98]"
-          >
-            Sign Up
+            Access as Guest
           </button>
         </div>
       </motion.div>

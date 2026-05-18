@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { useAuth } from '@/components/AuthProvider';
+import { signOut } from '@/backend/auth';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 type Tab = 'home' | 'history' | 'tasks' | 'settings' | 'protocol';
 
@@ -155,6 +157,7 @@ export default function App() {
               <SettingsTab 
                 entries={entries} 
                 onClear={clearLogs}
+                user={user}
               />
             )}
           </motion.div>
@@ -693,13 +696,20 @@ function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleTask, de
   );
 }
 
-function SettingsTab({ entries, onClear }: { 
+function SettingsTab({ entries, onClear, user }: { 
   entries: LogEntry[], 
-  onClear: () => void 
+  onClear: () => void,
+  user: SupabaseUser | null
 }) {
   const [confirmClear, setConfirmClear] = useState<'none' | 'purge'>('none');
   const [copied, setCopied] = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+  };
 
   const JSON_TEMPLATE = `{
   "rawInput": "Meal description here",
@@ -727,10 +737,30 @@ function SettingsTab({ entries, onClear }: {
           <User size={24} className="text-white/40" />
         </div>
         <span className="small-caps text-white/20 !tracking-[0.4em]">Operational</span>
-        <h2 className="text-2xl font-extralight tracking-tight mt-1">Profile</h2>
+        <h2 className="text-2xl font-extralight tracking-tight mt-1 truncate max-w-xs mx-auto px-4">
+          {user?.email || 'Profile'}
+        </h2>
       </header>
       
       <div className="space-y-8">
+        <div className="space-y-3">
+          <label className="small-caps ml-1 !text-white/20">Identity Management</label>
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">
+             <button 
+               onClick={handleSignOut}
+               className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group"
+             >
+                <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Deauthorize Session</span>
+                  <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Logout of current operational node</span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40">
+                  <X size={14} />
+                </div>
+             </button>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Data Persistence</label>
           <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">

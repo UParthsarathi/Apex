@@ -2,5 +2,5 @@
   "name": "Remix: DailyLog",
   "description": "A refined, high-performance daily journal for nourishment, activity, and priority checklists.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
