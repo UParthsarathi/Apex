@@ -66,48 +66,30 @@ export interface SleepEntry {
   category: 'Sleep' | 'Nap';
 }
 
-export type LogEntry = (FoodEntry | WorkoutEntry | TaskEntry | SleepEntry | WaterEntry) & { isSimulation?: boolean };
+export type LogEntry = (FoodEntry | WorkoutEntry | TaskEntry | SleepEntry | WaterEntry);
 
 export function useDailyLog() {
-  const [realEntries, setRealEntries] = useState<LogEntry[]>([]);
-  const [simulationEntries, setSimulationEntries] = useState<LogEntry[]>([]);
-  const [isSimulationMode, setIsSimulationMode] = useState(false);
+  const [entries, setEntries] = useState<LogEntry[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const storedReal = localStorage.getItem('daily_log_entries');
-    const storedSim = localStorage.getItem('simulation_log_entries');
-    const storedMode = localStorage.getItem('daily_log_mode');
+    const stored = localStorage.getItem('daily_log_entries');
 
-    if (storedReal) {
+    if (stored) {
       try {
-        setRealEntries(JSON.parse(storedReal));
+        setEntries(JSON.parse(stored));
       } catch (e) {
-        console.error("Failed to parse stored real entries");
+        console.error("Failed to parse stored entries");
       }
-    }
-    if (storedSim) {
-      try {
-        setSimulationEntries(JSON.parse(storedSim));
-      } catch (e) {
-        console.error("Failed to parse stored simulation entries");
-      }
-    }
-    if (storedMode === 'simulation') {
-      setIsSimulationMode(true);
     }
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('daily_log_entries', JSON.stringify(realEntries));
-      localStorage.setItem('simulation_log_entries', JSON.stringify(simulationEntries));
-      localStorage.setItem('daily_log_mode', isSimulationMode ? 'simulation' : 'real');
+      localStorage.setItem('daily_log_entries', JSON.stringify(entries));
     }
-  }, [realEntries, simulationEntries, isSimulationMode, isLoaded]);
-
-  const activeEntries = isSimulationMode ? simulationEntries : realEntries;
+  }, [entries, isLoaded]);
 
   const addFood = (
     meal: FoodEntry['meal'], 
@@ -124,11 +106,7 @@ export function useDailyLog() {
       description,
       ...nutrition
     };
-    if (isSimulationMode) {
-      setSimulationEntries(prev => [entry, ...prev]);
-    } else {
-      setRealEntries(prev => [entry, ...prev]);
-    }
+    setEntries(prev => [entry, ...prev]);
   };
 
   const addWater = (amount: number, date?: Date) => {
@@ -139,11 +117,7 @@ export function useDailyLog() {
       timestamp,
       amount,
     };
-    if (isSimulationMode) {
-      setSimulationEntries(prev => [entry, ...prev]);
-    } else {
-      setRealEntries(prev => [entry, ...prev]);
-    }
+    setEntries(prev => [entry, ...prev]);
   };
 
   const addWorkout = (activity: string, calories: number, duration?: number, date?: Date) => {
@@ -156,11 +130,7 @@ export function useDailyLog() {
       calories,
       duration,
     };
-    if (isSimulationMode) {
-      setSimulationEntries(prev => [entry, ...prev]);
-    } else {
-      setRealEntries(prev => [entry, ...prev]);
-    }
+    setEntries(prev => [entry, ...prev]);
   };
 
   const addTask = (description: string, date?: Date) => {
@@ -172,11 +142,7 @@ export function useDailyLog() {
       description,
       completed: false,
     };
-    if (isSimulationMode) {
-      setSimulationEntries(prev => [entry, ...prev]);
-    } else {
-      setRealEntries(prev => [entry, ...prev]);
-    }
+    setEntries(prev => [entry, ...prev]);
   };
 
   const addSleep = (duration: number, quality: number, category: 'Sleep' | 'Nap' = 'Sleep', date?: Date) => {
@@ -189,154 +155,29 @@ export function useDailyLog() {
       quality,
       category,
     };
-    if (isSimulationMode) {
-      setSimulationEntries(prev => [entry, ...prev]);
-    } else {
-      setRealEntries(prev => [entry, ...prev]);
-    }
+    setEntries(prev => [entry, ...prev]);
   };
 
   const toggleTask = (id: string) => {
-    const updater = (prev: LogEntry[]) => 
-      prev.map(entry => 
-        entry.id === id && entry.type === 'task' 
-          ? { ...entry, completed: !entry.completed } 
-          : entry
+    setEntries(prev => 
+        prev.map(entry => 
+          entry.id === id && entry.type === 'task' 
+            ? { ...entry, completed: !entry.completed } 
+            : entry
+        )
       );
-    
-    if (isSimulationMode) {
-      setSimulationEntries(updater);
-    } else {
-      setRealEntries(updater);
-    }
   };
 
   const deleteEntry = (id: string) => {
-    const updater = (prev: LogEntry[]) => prev.filter(entry => entry.id !== id);
-    if (isSimulationMode) {
-      setSimulationEntries(updater);
-    } else {
-      setRealEntries(updater);
-    }
+    setEntries(prev => prev.filter(entry => entry.id !== id));
   };
 
   const clearLogs = () => {
-    if (isSimulationMode) {
-      setSimulationEntries([]);
-    } else {
-      setRealEntries([]);
-    }
-  };
-
-  const clearSimulation = () => {
-    setSimulationEntries([]);
-    setIsSimulationMode(false);
-  };
-
-  const seedSimulation = () => {
-    const mockEntries: LogEntry[] = [];
-    const now = new Date();
-    
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      const baseTime = date.getTime();
-      
-      const meals: { meal: FoodEntry['meal'], hour: number, desc: string, cals: number }[] = [
-        { meal: 'Breakfast', hour: 8, desc: 'Oatmeal with berries and nuts', cals: 350 },
-        { meal: 'Lunch', hour: 13, desc: 'Grilled chicken salad with avocado', cals: 550 },
-        { meal: 'Snacks', hour: 16, desc: 'Greek yogurt with honey', cals: 200 },
-        { meal: 'Dinner', hour: 19, desc: 'Salmon with wilted greens and quinoa', cals: 650 }
-      ];
-
-      meals.forEach(m => {
-        const mealTime = new Date(baseTime);
-        mealTime.setHours(m.hour, Math.floor(Math.random() * 60));
-        // Ensure some days are partial (50-80) and some are full (>80)
-        // Adjust protein based on day index to create a visible streak
-        const dayFactor = (i % 7 === 0) ? 0.4 : 1.0; // Every 7th day is a low protein day (break streak maybe?)
-        const protein = Math.floor((m.cals / 12) * dayFactor); 
-        
-        mockEntries.push({
-          id: uuidv4(),
-          type: 'food',
-          timestamp: mealTime.getTime(),
-          meal: m.meal,
-          description: m.desc,
-          calories: m.cals,
-          protein,
-          carbs: Math.floor(m.cals / 10),
-          fat: Math.floor(m.cals / 30),
-          fiber: 5,
-          isSimulation: true
-        });
-      });
-
-      const tasks = ['Update system protocols', 'Optimize neural pathways', 'Cardiovascular maintenance', 'Review tactical logs'];
-      tasks.forEach((t, index) => {
-        const taskTime = new Date(baseTime);
-        taskTime.setHours(9 + index * 2);
-        mockEntries.push({
-          id: uuidv4(),
-          type: 'task',
-          timestamp: taskTime.getTime(),
-          description: t,
-          completed: Math.random() > 0.3,
-          isSimulation: true
-        });
-      });
-
-      if (Math.random() > 0.4) {
-        const workoutTime = new Date(baseTime);
-        workoutTime.setHours(17, 30);
-        mockEntries.push({
-          id: uuidv4(),
-          type: 'workout',
-          timestamp: workoutTime.getTime(),
-          activity: Math.random() > 0.5 ? 'Zone 2 Endurance' : 'Hypertrophy Session',
-          calories: 400 + Math.floor(Math.random() * 200),
-          isSimulation: true
-        });
-      }
-
-      const sleepTime = new Date(baseTime);
-      sleepTime.setHours(7, 0); // Recorded when waking up
-      const sleepHours = 7 + Math.floor(Math.random() * 2);
-      const sleepMinutes = Math.floor(Math.random() * 12) * 5;
-      mockEntries.push({
-        id: uuidv4(),
-        type: 'sleep',
-        timestamp: sleepTime.getTime(),
-        duration: sleepHours + sleepMinutes / 60,
-        quality: 6 + Math.floor(Math.random() * 4),
-        category: 'Sleep',
-        isSimulation: true
-      });
-
-      if (Math.random() > 0.7) {
-        const napTime = new Date(baseTime);
-        napTime.setHours(14, 30);
-        const napMinutes = 20 + Math.floor(Math.random() * 40);
-        mockEntries.push({
-          id: uuidv4(),
-          type: 'sleep',
-          timestamp: napTime.getTime(),
-          duration: napMinutes / 60,
-          quality: 5 + Math.floor(Math.random() * 3),
-          category: 'Nap',
-          isSimulation: true
-        });
-      }
-    }
-
-    setSimulationEntries(mockEntries.sort((a, b) => b.timestamp - a.timestamp));
-    setIsSimulationMode(true);
+    setEntries([]);
   };
 
   return {
-    entries: activeEntries,
-    isSimulationMode,
-    setIsSimulationMode,
+    entries,
     addFood,
     addWater,
     addWorkout,
@@ -345,8 +186,6 @@ export function useDailyLog() {
     toggleTask,
     deleteEntry,
     clearLogs,
-    clearSimulation,
-    seedSimulation,
     isLoaded
   };
 }

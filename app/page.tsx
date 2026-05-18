@@ -18,7 +18,6 @@ export default function App() {
   const [showConsistency, setShowConsistency] = useState(false);
   const { 
     entries, 
-    isSimulationMode,
     addFood, 
     addWater,
     addWorkout, 
@@ -27,8 +26,6 @@ export default function App() {
     toggleTask, 
     deleteEntry, 
     clearLogs, 
-    clearSimulation, 
-    seedSimulation, 
     isLoaded 
   } = useDailyLog();
 
@@ -99,15 +96,12 @@ export default function App() {
             {activeTab === 'home' && (
               <HomeTab 
                 entries={entries} 
-                isSimulation={isSimulationMode}
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
                 addFood={addFood} 
                 addWater={addWater}
                 addWorkout={addWorkout} 
                 addTask={addTask} 
-                onSeed={seedSimulation}
-                onClearSimulation={clearSimulation}
               />
             )}
             {activeTab === 'history' && (
@@ -147,13 +141,7 @@ export default function App() {
             {activeTab === 'settings' && (
               <SettingsTab 
                 entries={entries} 
-                isSimulationMode={isSimulationMode}
-                onSeed={() => {
-                  seedSimulation();
-                  setActiveTab('home');
-                }} 
                 onClear={clearLogs}
-                onClearSimulation={clearSimulation}
               />
             )}
           </motion.div>
@@ -212,17 +200,14 @@ function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, la
 
 // --- TABS ---
 
-function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, addWater, addWorkout, addTask, onSeed, onClearSimulation }: { 
+function HomeTab({ entries, selectedDate, onDateChange, addFood, addWater, addWorkout, addTask }: { 
   entries: LogEntry[], 
-  isSimulation: boolean,
   selectedDate: Date,
   onDateChange: (d: Date) => void,
   addFood: (meal: FoodEntry['meal'], desc: string, nutrition?: any, date?: Date) => void, 
   addWater: (amount: number, date?: Date) => void,
   addWorkout: (activity: string, calories: number, duration?: number, date?: Date) => void, 
   addTask: (desc: string, date?: Date) => void,
-  onSeed: () => void,
-  onClearSimulation: () => void
 }) {
   const [showPerformance, setShowPerformance] = useState(false);
   const todayEntries = entries.filter(e => isSameDay(e.timestamp, selectedDate));
@@ -253,26 +238,7 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
 
   return (
     <div className="px-5 space-y-6">
-      <header className="space-y-4">
-        {isSimulation && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between bg-sky-500/10 border border-sky-500/20 rounded-xl px-3 py-2"
-          >
-            <div className="flex items-center gap-2">
-              <Zap size={10} className="text-sky-400 animate-pulse" />
-              <span className="text-[8px] font-bold text-sky-400 uppercase tracking-widest">Simulation Mode Active</span>
-            </div>
-            <button 
-              onClick={onClearSimulation}
-              className="text-[8px] font-bold text-white/40 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1"
-            >
-              <X size={10} />
-              Exit
-            </button>
-          </motion.div>
-        )}
+       <header className="space-y-4">
         <DateNavigator selectedDate={selectedDate} onDateChange={onDateChange} />
       </header>
 
@@ -284,16 +250,9 @@ function HomeTab({ entries, isSimulation, selectedDate, onDateChange, addFood, a
         >
           <div className="space-y-2">
             <h2 className="text-2xl font-extralight tracking-tight text-white">Empty Log</h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest leading-relaxed">No records found. Seed sample data to see how the dashboard works or start tracking manually below.</p>
+            <p className="text-xs text-white/30 uppercase tracking-widest leading-relaxed">No records found. Start tracking your activities manually below.</p>
           </div>
           <div className="flex gap-3">
-            <button 
-              type="button"
-              onClick={onSeed}
-              className="flex-1 bg-white text-black px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white/90 active:scale-[0.98] transition-all cursor-pointer relative z-10"
-            >
-              Seed Data
-            </button>
             <button 
               type="button"
               onClick={() => addTask('Establish your daily goals')}
@@ -721,14 +680,11 @@ function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleTask, de
   );
 }
 
-function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimulation }: { 
+function SettingsTab({ entries, onClear }: { 
   entries: LogEntry[], 
-  isSimulationMode: boolean,
-  onSeed: () => void, 
-  onClear: () => void, 
-  onClearSimulation: () => void 
+  onClear: () => void 
 }) {
-  const [confirmClear, setConfirmClear] = useState<'none' | 'purge' | 'simulation'>('none');
+  const [confirmClear, setConfirmClear] = useState<'none' | 'purge'>('none');
   const [copied, setCopied] = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);
 
@@ -755,11 +711,9 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
     <div className="px-5 py-6 font-sans overflow-visible">
       <header className="mb-8 text-center pt-4">
         <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 mx-auto mb-4 flex items-center justify-center relative">
-          <User size={24} className={cn("text-white/40", isSimulationMode && "text-sky-400")} />
+          <User size={24} className="text-white/40" />
         </div>
-        <span className={cn("small-caps text-white/20 !tracking-[0.4em]", isSimulationMode && "text-sky-400")}>
-          {isSimulationMode ? "Sample Data Active" : "Operational"}
-        </span>
+        <span className="small-caps text-white/20 !tracking-[0.4em]">Operational</span>
         <h2 className="text-2xl font-extralight tracking-tight mt-1">Profile</h2>
       </header>
       
@@ -773,13 +727,13 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                  const url = URL.createObjectURL(blob);
                  const a = document.createElement('a');
                  a.href = url;
-                 a.download = `${isSimulationMode ? 'simulation' : 'core'}_recovery_${format(new Date(), 'yyyyMMdd')}.json`;
+                 a.download = `core_recovery_${format(new Date(), 'yyyyMMdd')}.json`;
                  a.click();
                }}
                className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group border-b border-white/5"
              >
                 <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-widest", isSimulationMode ? "text-sky-400" : "text-white")}>Export Data</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Export Data</span>
                   <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Download your activity log as JSON</span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40">
@@ -828,53 +782,6 @@ function SettingsTab({ entries, isSimulationMode, onSeed, onClear, onClearSimula
                  )}
                </AnimatePresence>
              </div>
-
-             {isSimulationMode ? (
-               <button 
-                 type="button"
-                 onClick={() => {
-                   if (confirmClear === 'simulation') {
-                     onClearSimulation();
-                     setConfirmClear('none');
-                   } else {
-                     setConfirmClear('simulation');
-                   }
-                 }}
-                 onMouseLeave={() => setConfirmClear('none')}
-                 className={cn(
-                   "w-full p-4 flex justify-between items-center transition-all group border-b border-white/5 cursor-pointer",
-                   confirmClear === 'simulation' ? "bg-amber-500/10" : "hover:bg-amber-500/5"
-                 )}
-               >
-                  <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                    <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", confirmClear === 'simulation' ? "text-amber-500" : "text-amber-500/60")}>
-                      {confirmClear === 'simulation' ? 'Confirm Termination' : 'Terminate Simulation'}
-                    </span>
-                    <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">
-                      {confirmClear === 'simulation' ? 'Tap again to purge simulated buffer' : 'Exit simulation mode and purge mock data'}
-                    </span>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-amber-500/5 flex items-center justify-center text-amber-500/40">
-                    <X size={14} />
-                  </div>
-               </button>
-             ) : (
-               <button 
-                 type="button"
-                 onClick={() => {
-                   onSeed();
-                 }}
-                 className="w-full p-4 flex justify-between items-center hover:bg-sky-500/10 transition-all group border-b border-white/5 active:bg-sky-500/20 cursor-pointer"
-               >
-                  <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-sky-400">Initialize Simulation</span>
-                    <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">Seed 30 days of biometric records in a sandbox</span>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-sky-400/5 flex items-center justify-center text-sky-400/40">
-                    <Zap size={14} />
-                  </div>
-               </button>
-             )}
 
              <button 
                onClick={() => {
