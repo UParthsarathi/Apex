@@ -1,7 +1,9 @@
 import { getSupabase } from "./supabase";
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await getSupabase().auth.signInWithPassword({
+  const supabase = getSupabase();
+  if (!supabase) return { data: null, error: { message: "Supabase not configured" } as any };
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -9,7 +11,9 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signUp(email: string, password: string) {
-  const { data, error } = await getSupabase().auth.signUp({
+  const supabase = getSupabase();
+  if (!supabase) return { data: null, error: { message: "Supabase not configured" } as any };
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
@@ -17,6 +21,8 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signOut() {
-  const { error } = await getSupabase().auth.signOut();
+  const supabase = getSupabase();
+  if (!supabase) return { error: { message: "Supabase not configured" } as any };
+  const { error } = await supabase.auth.signOut();
   return { error };
 }
