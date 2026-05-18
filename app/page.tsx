@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Home, History, CheckSquare, User, Flame, Utensils, ClipboardList, Trash2, Plus, X, Activity, ArrowUpRight, Zap, Target, Dna, Droplets, Wheat, CircleDot, Calendar, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
 import { useDailyLog, LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry } from '@/hooks/use-daily-log';
 import { format, isToday, isYesterday, isSameDay, startOfDay, subDays, addDays, eachDayOfInterval, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { useAuth } from '@/components/AuthProvider';
 
 type Tab = 'home' | 'history' | 'tasks' | 'settings' | 'protocol';
 
@@ -16,6 +18,15 @@ export default function App() {
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [showPerformance, setShowPerformance] = useState(false);
   const [showConsistency, setShowConsistency] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
   const { 
     entries, 
     addFood, 
@@ -29,7 +40,7 @@ export default function App() {
     isLoaded 
   } = useDailyLog();
 
-  if (!isLoaded) {
+  if (!isLoaded || authLoading) {
     return (
       <div className="flex h-[100dvh] items-center justify-center bg-black">
         <motion.div 
@@ -42,6 +53,8 @@ export default function App() {
       </div>
     );
   }
+
+  if (!user) return null;
 
   const handleDateJump = (date: Date) => {
     setSelectedDate(date);

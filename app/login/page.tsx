@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn, signUp } from '@/backend/auth';
+import { motion } from 'motion/react';
+import { Lock, User } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,31 +19,65 @@ export default function LoginPage() {
   };
 
   const handleSignUp = async () => {
-     const { error } = await signUp(email, password);
-     if (error) setError(error.message);
-     else router.push('/');
+    const { error } = await signUp(email, password);
+    if (error) setError(error.message);
+    else router.push('/');
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Login / Sign Up</h1>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border p-2 mb-2"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-2 mb-2"
-      />
-      {error && <p className="text-red-500">{error}</p>}
-      <button onClick={handleSignIn} className="bg-blue-500 text-white p-2 mb-2 w-full">Sign In</button>
-      <button onClick={handleSignUp} className="bg-green-500 text-white p-2 w-full">Sign Up</button>
+    <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm space-y-8"
+      >
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-extralight tracking-tight">Access</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/30">System Authentication</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <User className="absolute left-3 top-3 text-white/20" size={18} />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+            />
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 text-white/20" size={18} />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-red-500 uppercase tracking-widest text-center">{error}</p>
+        )}
+
+        <div className="flex gap-3">
+          <button 
+            onClick={handleSignIn} 
+            className="flex-1 bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 transition-all active:scale-[0.98]"
+          >
+            Sign In
+          </button>
+          <button 
+            onClick={handleSignUp} 
+            className="flex-1 bg-white/5 text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-white/10 transition-all active:scale-[0.98]"
+          >
+            Sign Up
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }
