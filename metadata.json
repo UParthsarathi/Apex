@@ -1,6 +1,6 @@
 {
-  "name": "Remix: DailyLog",
-  "description": "A refined, high-performance daily journal for nourishment, activity, and priority checklists.",
+  "name": "Apex Protocol",
+  "description": "High-fidelity biometric and performance tracking protocol.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

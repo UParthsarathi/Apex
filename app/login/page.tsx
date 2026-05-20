@@ -60,6 +60,18 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm space-y-8"
       >
+        <div className="flex justify-center mb-8">
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            {/* Outer Glow */}
+            <div className="absolute inset-0 bg-[#00FF88]/20 blur-xl rounded-full" />
+            {/* Geometric A / Mountain Form */}
+            <svg viewBox="0 0 100 100" className="w-12 h-12 relative z-10 drop-shadow-[0_0_10px_rgba(0,255,136,0.8)]">
+              <path d="M50 15 L90 85 L75 85 L50 40 L25 85 L10 85 Z" fill="#00FF88" />
+              <path d="M35 65 L65 65 L60 75 L40 75 Z" fill="#00FF88" />
+            </svg>
+          </div>
+        </div>
+
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-extralight tracking-tight">
             {mode === 'signin' ? 'Sign In' : 'Create Account'}

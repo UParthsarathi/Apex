@@ -9,15 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/apex/192/192",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://picsum.photos/seed/apex/512/512",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
