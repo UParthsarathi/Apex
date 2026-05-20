@@ -1,5 +1,3 @@
-'use server';
-
 import { getSupabase } from "./supabase";
 
 export async function signIn(email: string, password: string) {
