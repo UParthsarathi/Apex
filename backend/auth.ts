@@ -20,13 +20,6 @@ export async function signUp(email: string, password: string) {
   return { data, error };
 }
 
-export async function signInAnonymously() {
-  const supabase = getSupabase();
-  if (!supabase) return { data: null, error: { message: "Supabase not configured" } as any };
-  const { data, error } = await supabase.auth.signInAnonymously();
-  return { data, error };
-}
-
 export async function signOut() {
   const supabase = getSupabase();
   if (!supabase) return { error: { message: "Supabase not configured" } as any };
