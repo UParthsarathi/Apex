@@ -70,7 +70,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
       {/* Primary Metrics Bento - High Density */}
       <section className="grid grid-cols-4 gap-3">
         {/* Main Burn/Intake Card */}
-        <div className="col-span-4 bento-card neon-shimmer bg-white/[0.03] border-white/5 p-5 flex items-center justify-between relative overflow-hidden group">
+        <div className="col-span-4 bento-card bg-white/[0.03] border-white/5 p-5 flex items-center justify-between relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
           <div className="relative z-10 space-y-0.5">
             <span className="small-caps text-white/30 !tracking-widest">Net Intake</span>

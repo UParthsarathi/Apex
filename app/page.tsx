@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Home, History, CheckSquare, User, Zap, Calendar, BarChart2 } from 'lucide-react';
 import { startOfToday } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import dynamic from 'next/dynamic';
+import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useDailyLog } from '@/hooks/use-daily-log';
 import { useAuth } from '@/components/AuthProvider';
@@ -13,8 +14,13 @@ import { HistoryTab } from '@/components/tabs/HistoryTab';
 import { TasksTab } from '@/components/tabs/TasksTab';
 import { ProtocolTab } from '@/components/tabs/ProtocolTab';
 import { SettingsTab } from '@/components/tabs/SettingsTab';
-import { PerformanceModal } from '@/components/modals/PerformanceModal';
 import { ConsistencyModal } from '@/components/modals/ConsistencyModal';
+
+// recharts only loads when this chunk does — keeps it out of the initial bundle
+const PerformanceModal = dynamic(
+  () => import('@/components/modals/PerformanceModal').then(m => m.PerformanceModal),
+  { ssr: false }
+);
 import { NameGate } from '@/components/NameGate';
 
 type Tab = 'home' | 'history' | 'tasks' | 'settings' | 'protocol';
@@ -105,13 +111,11 @@ export default function App() {
           </button>
         </div>
 
-        <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="min-h-full pb-32"
           >
             {activeTab === 'home' && (
@@ -156,7 +160,6 @@ export default function App() {
               />
             )}
           </motion.div>
-        </AnimatePresence>
       </main>
 
       {/* Modals */}
