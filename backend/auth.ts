@@ -27,6 +27,15 @@ export async function signInAnonymously() {
   return { data, error };
 }
 
+export async function updateDisplayName(name: string) {
+  const supabase = getSupabase();
+  if (!supabase) return { data: null, error: { message: "Supabase not configured" } as any };
+  const { data, error } = await supabase.auth.updateUser({
+    data: { display_name: name },
+  });
+  return { data, error };
+}
+
 export async function signOut() {
   const supabase = getSupabase();
   if (!supabase) return { error: { message: "Supabase not configured" } as any };
