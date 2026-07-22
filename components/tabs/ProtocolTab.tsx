@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { FoodEntry } from '@/hooks/use-daily-log';
 import { DateNavigator } from '@/components/DateNavigator';
 import { FoodQuickAdd, WaterQuickAdd, WorkoutQuickAdd, SleepQuickAdd } from '@/components/QuickAdds';
+import { FoodChat } from '@/components/FoodChat';
 
 export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, addWorkout, addSleep }: {
   selectedDate: Date,
@@ -17,6 +18,7 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
   addSleep: (duration: number, quality: number, category: 'Sleep' | 'Nap', date?: Date) => void,
 }) {
   const [activeModule, setActiveModule] = useState<'intake' | 'water' | 'activity' | 'sleep'>('intake');
+  const [foodMode, setFoodMode] = useState<'manual' | 'ai'>('manual');
 
   const modules = [
     { id: 'intake', label: 'Nutrition', icon: <Utensils size={14} />, color: 'text-[#00FF88]' },
@@ -78,9 +80,24 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
                     <Utensils size={12} className="text-[#00FF88]" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Add Meal</span>
                   </div>
-                  <span className="text-[8px] font-mono text-white/10 italic">Module 01</span>
+                  <div className="flex bg-white/5 p-0.5 rounded-full">
+                    {(['manual', 'ai'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setFoodMode(mode)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-[0.15em] transition-all",
+                          foodMode === mode ? "bg-[#00FF88] text-black" : "text-white/25 hover:text-white/50"
+                        )}
+                      >
+                        {mode === 'ai' ? 'AI Chat' : 'Manual'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <FoodQuickAdd onAdd={(m, d, n) => addFood(m, d, n, selectedDate)} />
+                {foodMode === 'manual'
+                  ? <FoodQuickAdd onAdd={(m, d, n) => addFood(m, d, n, selectedDate)} />
+                  : <FoodChat onAdd={(m, d, n) => addFood(m, d, n, selectedDate)} />}
               </div>
             )}
 

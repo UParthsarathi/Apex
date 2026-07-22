@@ -6,6 +6,27 @@ import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FoodEntry, NUTRIENT_KEYS } from '@/hooks/use-daily-log';
 
+// Shared by the paste flow and the AI chat: AI-JSON -> addFood args. Null if the shape is unknown.
+export function parseFoodJson(entryData: any, fallbackMeal: FoodEntry['meal']) {
+  if (!entryData || (!entryData.rawInput && !entryData.items && !entryData.totals)) return null;
+
+  const nutrition: Record<string, unknown> = { items: entryData.items || [] };
+  for (const k of NUTRIENT_KEYS) {
+    nutrition[k] = entryData.totals?.[k] ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.[k] || 0), 0) || 0);
+  }
+
+  let meal = fallbackMeal;
+  if (entryData.mealType) {
+    const m = String(entryData.mealType).toLowerCase();
+    if (m.includes('breakfast')) meal = 'Breakfast';
+    else if (m.includes('lunch')) meal = 'Lunch';
+    else if (m.includes('snack')) meal = 'Snacks';
+    else if (m.includes('dinner')) meal = 'Dinner';
+  }
+
+  return { meal, description: entryData.rawInput || 'Encoded Component', nutrition };
+}
+
 export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string, nutrition?: any) => void }) {
   const [desc, setDesc] = useState('');
   const [meal, setMeal] = useState<FoodEntry['meal']>('Lunch');
@@ -23,27 +44,10 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
         const data = JSON.parse(desc.trim());
 
         const processEntry = (entryData: any) => {
-          if (entryData.rawInput || entryData.items || entryData.totals) {
-            // Calculate totals from items if totals is missing
-            const nutrition: Record<string, unknown> = { items: entryData.items || [] };
-            for (const k of NUTRIENT_KEYS) {
-              nutrition[k] = entryData.totals?.[k] ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.[k] || 0), 0) || 0);
-            }
-
-            // Map mealType to expected meal values (fuzzy matching)
-            let detectedMeal = meal;
-            if (entryData.mealType) {
-              const m = entryData.mealType.toLowerCase();
-              if (m.includes('breakfast')) detectedMeal = 'Breakfast';
-              else if (m.includes('lunch')) detectedMeal = 'Lunch';
-              else if (m.includes('snacks') || m.includes('snack')) detectedMeal = 'Snacks';
-              else if (m.includes('dinner')) detectedMeal = 'Dinner';
-            }
-
-            onAdd(detectedMeal, entryData.rawInput || "Encoded Component", nutrition);
-            return true;
-          }
-          return false;
+          const parsed = parseFoodJson(entryData, meal);
+          if (!parsed) return false;
+          onAdd(parsed.meal, parsed.description, parsed.nutrition);
+          return true;
         };
 
         if (Array.isArray(data)) {
