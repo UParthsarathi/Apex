@@ -4,23 +4,45 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, X, ArrowUpRight, Dna, Trash2, Pencil } from 'lucide-react';
+import { User, X, ArrowUpRight, Dna, Pencil, Lock, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogEntry } from '@/hooks/use-daily-log';
-import { signOut, updateDisplayName } from '@/backend/auth';
+import { signOut, updateDisplayName, linkEmail } from '@/backend/auth';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
-export function SettingsTab({ entries, onClear, user }: {
+export function SettingsTab({ entries, user }: {
   entries: LogEntry[],
-  onClear: () => void,
   user: SupabaseUser | null
 }) {
-  const [confirmClear, setConfirmClear] = useState<'none' | 'purge'>('none');
   const [copied, setCopied] = useState(false);
   const [showTemplate, setShowTemplate] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [linkEmailInput, setLinkEmailInput] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
+  const [linkStatus, setLinkStatus] = useState<{ kind: 'error' | 'success', msg: string } | null>(null);
+  const [linking, setLinking] = useState(false);
   const router = useRouter();
+
+  const handleLinkEmail = async () => {
+    if (!linkEmailInput.trim() || !linkPassword) {
+      setLinkStatus({ kind: 'error', msg: 'Email and password are required.' });
+      return;
+    }
+    setLinkStatus(null);
+    setLinking(true);
+    const { data, error } = await linkEmail(linkEmailInput.trim(), linkPassword);
+    setLinking(false);
+    if (error) {
+      setLinkStatus({ kind: 'error', msg: error.message });
+    } else if (data?.user?.new_email) {
+      setLinkStatus({ kind: 'success', msg: 'Check your inbox to confirm your email.' });
+    } else {
+      setLinkStatus({ kind: 'success', msg: 'Account secured. You can now sign in with email on any device.' });
+      setLinkEmailInput('');
+      setLinkPassword('');
+    }
+  };
 
   const displayName = (user?.user_metadata?.display_name as string) || 'Profile';
 
@@ -89,6 +111,56 @@ export function SettingsTab({ entries, onClear, user }: {
       </header>
 
       <div className="space-y-8">
+        {user?.is_anonymous && (
+          <div className="space-y-3">
+            <label className="small-caps ml-1 !text-white/20">Secure Account</label>
+            <div className="bg-[#0a0a0a] border border-[#00FF88]/10 rounded-2xl p-4 space-y-4">
+              <div className="flex items-start gap-3">
+                <ShieldCheck size={16} className="text-[#00FF88]/60 mt-0.5 shrink-0" />
+                <p className="text-[9px] text-white/30 uppercase tracking-widest leading-relaxed">
+                  Add an email to keep your data safe and sign in from any device. All your history stays.
+                </p>
+              </div>
+              <div className="relative">
+                <User className="absolute left-3 top-3 text-white/20" size={16} />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={linkEmailInput}
+                  onChange={(e) => setLinkEmailInput(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 pl-9 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+                />
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 text-white/20" size={16} />
+                <input
+                  type="password"
+                  placeholder="Create Password"
+                  value={linkPassword}
+                  onChange={(e) => setLinkPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLinkEmail()}
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 pl-9 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+                />
+              </div>
+              {linkStatus && (
+                <p className={cn(
+                  "text-[9px] uppercase tracking-widest text-center",
+                  linkStatus.kind === 'error' ? "text-red-500" : "text-[#00FF88]"
+                )}>
+                  {linkStatus.msg}
+                </p>
+              )}
+              <button
+                onClick={handleLinkEmail}
+                disabled={linking || !linkEmailInput.trim() || !linkPassword}
+                className="w-full bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-3.5 rounded-xl hover:bg-[#00FF88]/90 disabled:opacity-30 transition-all active:scale-[0.98]"
+              >
+                {linking ? 'Securing…' : 'Secure My Account'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Identity Management</label>
           <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">
@@ -171,62 +243,6 @@ export function SettingsTab({ entries, onClear, user }: {
                  )}
                </AnimatePresence>
              </div>
-
-             <button
-               onClick={() => {
-                 if (confirmClear === 'purge') {
-                   onClear();
-                   setConfirmClear('none');
-                 } else {
-                   setConfirmClear('purge');
-                 }
-               }}
-               onMouseLeave={() => setConfirmClear('none')}
-               className={cn(
-                 "w-full p-4 flex justify-between items-center transition-all group active:scale-[0.98]",
-                 confirmClear === 'purge' ? "bg-red-500/10" : "hover:bg-red-500/5"
-               )}
-             >
-                <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-widest transition-colors", confirmClear === 'purge' ? "text-red-500" : "text-red-500/60")}>
-                    {confirmClear === 'purge' ? 'Confirm Full Deletion' : 'Delete All Local Data'}
-                  </span>
-                  <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">
-                    {confirmClear === 'purge' ? 'Tap again to erase all history' : 'Permanently remove all activity records'}
-                  </span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-red-400/5 flex items-center justify-center text-red-500/20">
-                  <Trash2 size={14} />
-                </div>
-             </button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <label className="small-caps ml-1 !text-white/20">Biometrics</label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bento-card !p-3.5 text-center !bg-[#0a0a0a]">
-              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Heart Rate</span>
-              <span className="text-xs font-mono text-[#00FF88]/40 tracking-wider">OFFLINE</span>
-            </div>
-            <div className="bento-card !p-3.5 text-center !bg-[#0a0a0a]">
-              <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.2em] block mb-1">Daily Load</span>
-              <span className="text-xs font-mono text-[#00FF88]/40 tracking-wider">STANDBY</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <label className="small-caps ml-1 !text-white/20">System Meta</label>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 text-center">
-              <span className="text-[7px] font-bold text-white/10 uppercase block mb-0.5">Build</span>
-              <span className="text-[9px] font-mono text-white/30 tracking-tighter">7.A.4</span>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 text-center col-span-2">
-              <span className="text-[7px] font-bold text-white/10 uppercase block mb-0.5">System Architecture</span>
-              <span className="text-[9px] font-mono text-white/30 tracking-tighter uppercase">Unified Tracking Core</span>
-            </div>
           </div>
         </div>
       </div>

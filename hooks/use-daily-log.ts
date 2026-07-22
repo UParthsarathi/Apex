@@ -115,6 +115,7 @@ export function useDailyLog() {
           const local: LogEntry[] = JSON.parse(localStorage.getItem('daily_log_entries') || '[]');
           if (local.length) await supabase.from('entries').upsert(local.map(rowFor)); // upsert = idempotent
           localStorage.setItem('apex_migrated', 'true');
+          localStorage.removeItem('daily_log_entries'); // DB is the source of truth now
         } catch (e) {
           console.error('local import failed', e);
         }
@@ -189,16 +190,6 @@ export function useDailyLog() {
     });
   };
 
-  const clearLogs = () => {
-    setEntries([]);
-    const supabase = getSupabase();
-    if (supabase && user) {
-      supabase.from('entries').delete().eq('user_id', user.id).then(({ error }) => {
-        if (error) console.error('clear failed', error);
-      });
-    }
-  };
-
   return {
     entries,
     addFood,
@@ -208,7 +199,6 @@ export function useDailyLog() {
     addSleep,
     toggleTask,
     deleteEntry,
-    clearLogs,
     isLoaded
   };
 }

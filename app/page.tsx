@@ -42,7 +42,6 @@ export default function App() {
     addSleep,
     toggleTask,
     deleteEntry,
-    clearLogs,
     isLoaded
   } = useDailyLog();
 
@@ -153,7 +152,6 @@ export default function App() {
             {activeTab === 'settings' && (
               <SettingsTab
                 entries={entries}
-                onClear={clearLogs}
                 user={user}
               />
             )}
