@@ -5,6 +5,16 @@ import { useAuth } from '@/components/AuthProvider';
 
 export type LogType = 'food' | 'workout' | 'task' | 'sleep' | 'water';
 
+// Single source of truth for every tracked nutrient — the JSON parser,
+// manual entry, and dashboard sums all iterate this list.
+// Units by convention: g for macros/sugar/saturatedFat, mg for the rest.
+export const NUTRIENT_KEYS = [
+  'calories', 'protein', 'carbs', 'fat', 'fiber',
+  'sugar', 'sodium', 'saturatedFat', 'cholesterol',
+  'potassium', 'calcium', 'iron',
+] as const;
+export type NutrientKey = typeof NUTRIENT_KEYS[number];
+
 export interface WaterEntry {
   id: string;
   type: 'water';
@@ -25,6 +35,13 @@ export interface FoodItem {
     carbs: number;
     fat: number;
     fiber: number;
+    sugar?: number;
+    sodium?: number;
+    saturatedFat?: number;
+    cholesterol?: number;
+    potassium?: number;
+    calcium?: number;
+    iron?: number;
   };
 }
 
@@ -40,6 +57,13 @@ export interface FoodEntry {
   fat?: number;
   carbs?: number;
   fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  saturatedFat?: number;
+  cholesterol?: number;
+  potassium?: number;
+  calcium?: number;
+  iron?: number;
 }
 
 export interface WorkoutEntry {

@@ -66,7 +66,7 @@ export function SettingsTab({ entries, user }: {
     {
       "name": "Component Name",
       "quantity": { "value": 1, "unit": "serving" },
-      "macros": { "calories": 100, "protein": 10, "carbs": 10, "fat": 2, "fiber": 1 }
+      "macros": { "calories": 100, "protein": 10, "carbs": 10, "fat": 2, "fiber": 1, "sugar": 5, "sodium": 200, "saturatedFat": 1, "cholesterol": 10, "potassium": 150, "calcium": 50, "iron": 1 }
     }
   ],
   "totals": {
@@ -74,7 +74,14 @@ export function SettingsTab({ entries, user }: {
     "protein": 10,
     "carbs": 10,
     "fat": 2,
-    "fiber": 1
+    "fiber": 1,
+    "sugar": 5,
+    "sodium": 200,
+    "saturatedFat": 1,
+    "cholesterol": 10,
+    "potassium": 150,
+    "calcium": 50,
+    "iron": 1
   }
 }`;
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FoodEntry } from '@/hooks/use-daily-log';
+import { FoodEntry, NUTRIENT_KEYS } from '@/hooks/use-daily-log';
 
 export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string, nutrition?: any) => void }) {
   const [desc, setDesc] = useState('');
@@ -25,14 +25,10 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
         const processEntry = (entryData: any) => {
           if (entryData.rawInput || entryData.items || entryData.totals) {
             // Calculate totals from items if totals is missing
-            const nutrition = {
-              calories: entryData.totals?.calories ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.calories || 0), 0) || 0),
-              protein: entryData.totals?.protein ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.protein || 0), 0) || 0),
-              carbs: entryData.totals?.carbs ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.carbs || 0), 0) || 0),
-              fat: entryData.totals?.fat ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.fat || 0), 0) || 0),
-              fiber: entryData.totals?.fiber ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.fiber || 0), 0) || 0),
-              items: entryData.items || []
-            };
+            const nutrition: Record<string, unknown> = { items: entryData.items || [] };
+            for (const k of NUTRIENT_KEYS) {
+              nutrition[k] = entryData.totals?.[k] ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.[k] || 0), 0) || 0);
+            }
 
             // Map mealType to expected meal values (fuzzy matching)
             let detectedMeal = meal;

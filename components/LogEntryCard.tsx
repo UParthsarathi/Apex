@@ -69,13 +69,20 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
              )}
 
              {(entry.protein || entry.carbs || entry.fat || entry.calories || entry.fiber) ? (
-               <div className="flex gap-3 pt-1">
+               <div className="flex flex-wrap gap-3 pt-1">
                  {[
                    { label: 'kcal', val: entry.calories, color: 'text-white' },
                    { label: 'p', val: entry.protein, color: 'text-indigo-400' },
                    { label: 'fib', val: entry.fiber, color: 'text-emerald-400' },
                    { label: 'f', val: entry.fat, color: 'text-rose-400' },
                    { label: 'c', val: entry.carbs, color: 'text-amber-400' },
+                   { label: 'sug', val: entry.sugar, color: 'text-white' },
+                   { label: 'na', val: entry.sodium, color: 'text-white' },
+                   { label: 'sat', val: entry.saturatedFat, color: 'text-white' },
+                   { label: 'chol', val: entry.cholesterol, color: 'text-white' },
+                   { label: 'k', val: entry.potassium, color: 'text-white' },
+                   { label: 'ca', val: entry.calcium, color: 'text-white' },
+                   { label: 'fe', val: entry.iron, color: 'text-white' },
                  ].filter(m => m.val).map(m => (
                    <div key={m.label} className="flex items-baseline gap-0.5">
                      <span className={cn("text-xs font-light opacity-60", m.color)}>{m.val}</span>

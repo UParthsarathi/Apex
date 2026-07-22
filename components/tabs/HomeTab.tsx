@@ -1,11 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { isSameDay } from 'date-fns';
 import { motion } from 'motion/react';
-import { Droplets, Zap } from 'lucide-react';
+import { ChevronDown, Droplets, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry, WaterEntry } from '@/hooks/use-daily-log';
+import { LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry, WaterEntry, NUTRIENT_KEYS, NutrientKey } from '@/hooks/use-daily-log';
 import { DateNavigator } from '@/components/DateNavigator';
+
+// Fixed daily values. "Cap" = stay under (number turns amber at 80%, red over);
+// "goal" = reach for (stays neutral — no alarm for not enough iron by lunch).
+const CAP = { sugar: 50, sodium: 2300, saturatedFat: 20, cholesterol: 300 };
+const capColor = (v: number, cap: number) =>
+  v > cap ? 'text-red-400' : v >= cap * 0.8 ? 'text-amber-400' : undefined;
 
 export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
   entries: LogEntry[],
@@ -31,13 +38,19 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
     ? sleepEntries.reduce((sum, s) => sum + s.quality, 0) / sleepEntries.length
     : 0;
 
-  const nutrition = food.reduce((acc, f) => ({
-    calories: acc.calories + (f.calories || 0),
-    protein: acc.protein + (f.protein || 0),
-    carbs: acc.carbs + (f.carbs || 0),
-    fat: acc.fat + (f.fat || 0),
-    fiber: acc.fiber + (f.fiber || 0),
-  }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  const nutrition = Object.fromEntries(
+    NUTRIENT_KEYS.map(k => [k, food.reduce((s, f) => s + (Number(f[k]) || 0), 0)])
+  ) as Record<NutrientKey, number>;
+
+  const [showMicros, setShowMicros] = useState(false);
+  const micros = [
+    { label: 'Sat Fat', value: nutrition.saturatedFat, unit: 'g', cap: CAP.saturatedFat },
+    { label: 'Chol', value: nutrition.cholesterol, unit: 'mg', cap: CAP.cholesterol },
+    { label: 'Net Carbs', value: Math.max(nutrition.carbs - nutrition.fiber, 0), unit: 'g' },
+    { label: 'Potassium', value: nutrition.potassium, unit: 'mg', goal: 3400 },
+    { label: 'Calcium', value: nutrition.calcium, unit: 'mg', goal: 1000 },
+    { label: 'Iron', value: nutrition.iron, unit: 'mg', goal: 18 },
+  ];
 
   return (
     <div className="px-5 space-y-6">
@@ -171,6 +184,16 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
            <span className="text-[7px] font-bold tracking-[0.2em] text-rose-500/20 uppercase">Fats</span>
         </div>
 
+        <div className="bento-card p-3 flex flex-col items-center gap-1 border-white/5 bg-white/[0.02]">
+           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sugar, CAP.sugar) ?? "text-white/80")}>{nutrition.sugar}g</span>
+           <span className="text-[7px] font-bold tracking-[0.2em] text-white/20 uppercase">Sugar</span>
+        </div>
+
+        <div className="bento-card p-3 flex flex-col items-center gap-1 border-white/5 bg-white/[0.02]">
+           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sodium, CAP.sodium) ?? "text-white/80")}>{nutrition.sodium}<small className="text-[8px] opacity-40 ml-0.5">mg</small></span>
+           <span className="text-[7px] font-bold tracking-[0.2em] text-white/20 uppercase">Sodium</span>
+        </div>
+
         <div className="col-span-2 bento-card p-3 flex items-center justify-center gap-4 bg-indigo-500/[0.02] border-indigo-500/10 group">
            <div className="flex flex-col items-center">
               <span className="text-base font-light font-mono text-white/80 leading-tight">{completedTasks}<span className="text-white/20 mx-0.5">/</span>{tasks.length}</span>
@@ -182,6 +205,31 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
               <span className="text-[7px] font-bold text-white/10 tracking-[0.2em] uppercase">Done</span>
            </div>
         </div>
+
+        <button
+          onClick={() => setShowMicros(v => !v)}
+          className="col-span-2 bento-card p-3 flex items-center justify-center gap-2 hover:bg-white/[0.04] active:scale-[0.98] transition-colors"
+        >
+           <span className="text-[7px] font-bold tracking-[0.2em] text-white/20 uppercase">Micros</span>
+           <ChevronDown size={10} className={cn("text-white/20 transition-transform duration-300", showMicros && "rotate-180")} />
+        </button>
+
+        {showMicros && (
+          <div className="col-span-4 bento-card p-4 grid grid-cols-3 gap-x-3 gap-y-4">
+            {micros.map(m => (
+              <div key={m.label} className="flex flex-col items-center gap-1">
+                <span className={cn(
+                  "text-sm font-light leading-none tabular-nums",
+                  (m.cap && capColor(m.value, m.cap)) || "text-white/80"
+                )}>
+                  {m.value}<small className="text-[8px] opacity-30 ml-0.5">{m.unit}</small>
+                  {(m.cap ?? m.goal) != null && <span className="text-[8px] text-white/15 ml-1">/ {m.cap ?? m.goal}</span>}
+                </span>
+                <span className="text-[7px] font-bold tracking-[0.2em] text-white/15 uppercase">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
