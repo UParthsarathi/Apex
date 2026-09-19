@@ -1,6 +1,8 @@
 // Server-side proxy for the AI meal-logging chat. The Gemini key never
 // reaches the browser — it lives in GEMINI_API_KEY (Vercel env / .env.local).
 
+import { getSupabase } from '@/backend/supabase';
+
 export const maxDuration = 30;
 
 const SYSTEM_PROMPT = `You are an AI Nutrition Assistant whose primary goal is to accurately log meals through a natural conversation.
@@ -108,6 +110,16 @@ JSON last.
 Your goal is to make meal logging feel effortless while still producing high-quality structured nutrition data.`;
 
 export async function POST(req: Request) {
+  // Without this, anyone who finds the URL can POST and burn the Gemini quota.
+  // getUser(jwt) is stateless — it validates the token against Supabase's auth server.
+  // ponytail: auth only, no rate limit. A user can still loop anon signups; add a
+  // per-uid counter (Upstash/Vercel KV) if the quota actually gets drained.
+  const token = req.headers.get('authorization')?.replace(/^Bearer /, '');
+  const supabase = getSupabase();
+  if (!token || !supabase) return Response.json({ error: 'unauthorized' }, { status: 401 });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) return Response.json({ error: 'unauthorized' }, { status: 401 });
+
   let messages: { role: string; text: string }[];
   try {
     ({ messages } = await req.json());

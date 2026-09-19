@@ -5,6 +5,7 @@ import { Send, Check, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FoodEntry } from '@/hooks/use-daily-log';
 import { parseFoodJson } from '@/components/QuickAdds';
+import { useAuth } from '@/components/AuthProvider';
 
 type Msg = { role: 'user' | 'model'; text: string };
 
@@ -29,6 +30,7 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
   const [loading, setLoading] = useState(false);
   const [logged, setLogged] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { session } = useAuth();
 
   const send = async () => {
     const text = input.trim();
@@ -40,7 +42,10 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
         body: JSON.stringify({ messages: next }),
       });
       const data = await res.json();
