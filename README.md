@@ -1,48 +1,123 @@
 # Apex Protocol
 
-Calorie tracker I built for myself. The thing it does differently: you log meals using
-whatever LLM you already pay for, instead of me paying for one.
+A nutrition and habit tracker. It logs food, water, workouts, sleep and daily goals, and
+shows the day's net calories (eaten minus burned) along with macro and micronutrient totals.
+
+Next.js 15 (App Router) with React 19 and TypeScript on the front, Supabase for auth and
+Postgres, deployed on Vercel.
 
 Live: _<!-- put your Vercel URL here -->_
 
 <!--
 Screenshots: add these three, then uncomment.
-  docs/daily.png    Daily screen with real data, micros open
+  docs/daily.png    Daily screen with data
   docs/json.png     the Log box showing "JSON DETECTED"
-  docs/streak.png   consistency calendar with a streak going
+  docs/streak.png   consistency calendar
 
 | | | |
 |---|---|---|
 | ![](docs/daily.png) | ![](docs/json.png) | ![](docs/streak.png) |
 -->
 
-## Why I built it
+## Running it locally
 
-I've tried tracking calories three times and quit three times. Never because an app was
-missing a feature. It was always that logging a meal took too long, so I'd skip one, and
-once the day's number was wrong I stopped checking it at all.
+Needs Node 18+ and a Supabase project.
 
-So three things had to be true. Logging fast. The deficit number is the first thing I see,
-not buried under a menu. And something that shows me a streak, so one bad day doesn't feel
-like the whole thing is over.
+```bash
+npm install
+cp .env.example .env.local    # add your Supabase URL and anon key
+npm run dev                   # http://localhost:3000
+```
 
-## Logging with your own LLM
+Run the two files in `supabase/migrations/` in the Supabase SQL editor before first use.
 
-Settings → JSON Protocol Format → Copy. Paste that into ChatGPT or Claude or whatever you
-have open, say what you ate, paste the answer back into the app. It notices it's JSON and
-logs the meal with all twelve nutrients.
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Public. Ships to the browser. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public by design. Row level security is what restricts access, not the key. |
+| `GEMINI_API_KEY` | Server only, no `NEXT_PUBLIC_` prefix. Optional, only the in-app chat uses it. |
 
-Paste an array and it'll do a whole day in one go.
+Scripts: `npm run dev`, `build`, `start`, `lint`.
 
-I did it this way because the alternative is me paying per user and rate limiting everyone.
-This costs me nothing, there's no quota, and your food log never goes through my server.
+## Project structure
 
-There's also a built-in chat that does the same thing on my API key. It's on a free tier
-capped at 5 requests a minute and it 503s when the model is busy, which is why the paste
-flow is the main path and not the fallback.
+```
+app/          routes and the one API endpoint
+components/   UI
+hooks/        data layer
+backend/      Supabase client and auth calls
+lib/          utils
+supabase/     schema and RLS policy
+```
 
-<details>
-<summary>The JSON format (there's a copy button for this in the app)</summary>
+| Path | Responsibility |
+|---|---|
+| `app/layout.tsx` | HTML shell, font, global CSS, PWA manifest. Server component, no state. |
+| `app/providers.tsx` | The `'use client'` boundary. `layout.tsx` runs on the server and `AuthProvider` needs state, so the wrapping happens here. |
+| `app/page.tsx` | App shell. Holds `activeTab` and `selectedDate`, gates on auth state, renders the active tab. No data logic. |
+| `app/login/page.tsx` | Sign in, sign up, anonymous sign in. |
+| `app/api/chat/route.ts` | Server-side proxy to Gemini for the in-app chat. Validates the caller's Supabase JWT before forwarding. |
+| `hooks/use-daily-log.ts` | All entry types, the initial fetch, and every mutation (`addFood`, `addWater`, `addWorkout`, `addTask`, `addSleep`, `toggleTask`, `deleteEntry`). Called once, in `page.tsx`. |
+| `backend/supabase.ts` | Creates and memoises the Supabase client. |
+| `backend/auth.ts` | `signIn`, `signUp`, `signInAnonymously`, `linkEmail`, `updateDisplayName`, `signOut`. |
+| `components/AuthProvider.tsx` | Holds the session, subscribes to auth changes, exposes `useAuth()`. |
+| `components/tabs/` | One component per screen: Home, Protocol (logging), Tasks, History, Settings. They receive data and callbacks as props. |
+| `components/QuickAdds.tsx` | Five input forms, plus `parseFoodJson` which both the paste flow and the chat use. |
+| `components/FoodChat.tsx` | In-app LLM chat. Posts to `/api/chat`, parses JSON out of the reply. |
+| `components/LogEntryCard.tsx` | Renders any of the five entry types in the history list. |
+| `components/DateNavigator.tsx` | Seven day date strip. Takes a date, emits a date. |
+| `components/modals/` | `PerformanceModal` (7 day chart, lazy loaded), `ConsistencyModal` (streak calendar). |
+| `lib/utils.ts` | `cn()`, merges Tailwind classes. |
+| `supabase/migrations/` | `0001_init.sql` creates the table and policy, `0002` fixes a policy performance lint. |
+
+## How state flows
+
+There is one data layer and it is `hooks/use-daily-log.ts`. Nothing else imports Supabase for
+entry data. `page.tsx` calls `useDailyLog()` once and passes `entries` plus the mutation
+functions down to whichever tab is active.
+
+```
+page.tsx ──owns──> activeTab, selectedDate
+    │
+    ├──calls──> useDailyLog()  ──> Supabase
+    │
+    └──props──> tabs ──> forms
+```
+
+Saving an entry:
+
+```
+form -> onAdd prop -> addFood -> insert
+                        |-> setEntries   (local state, immediately)
+                        +-> supabase     (network, after)
+```
+
+`insert` updates local state before the network call, so the UI does not wait. Note the
+consequence: a failed write is currently not rolled back. See Known issues.
+
+Totals are not stored. `HomeTab` filters `entries` down to the selected day and reduces over
+`NUTRIENT_KEYS` on each render, so there is nothing to invalidate when an entry is deleted.
+
+`NUTRIENT_KEYS` in `hooks/use-daily-log.ts` is the single list of tracked nutrients. The JSON
+parser, the manual entry form and the dashboard all iterate it, so adding a nutrient means
+adding one string to that array.
+
+## Logging food
+
+Three paths, all ending in the same `addFood` call.
+
+**Manual.** Type a description, optionally fill the macro fields. The macro inputs are held as
+strings rather than numbers so an empty field stays empty instead of becoming 0.
+
+**Pasted JSON.** Settings has a copy button for the format below. The intended use is to paste
+it into an LLM along with what you ate, then paste the reply into the food input. The textarea
+checks whether the current value starts and ends with braces or brackets and shows a "JSON
+DETECTED" badge, then parses on save. An array logs multiple entries at once.
+
+**In-app chat.** Same thing without leaving the app, going through `/api/chat`. It uses the
+project's Gemini key and a free tier limited to 5 requests per minute.
+
+The format:
 
 ```json
 {
@@ -59,90 +134,24 @@ flow is the main path and not the fallback.
       }
     }
   ],
-  "totals": {
-    "calories": 100, "protein": 10, "carbs": 10, "fat": 2, "fiber": 1,
-    "sugar": 5, "sodium": 200, "saturatedFat": 1, "cholesterol": 10,
-    "potassium": 150, "calcium": 50, "iron": 1
-  }
+  "totals": { "calories": 100, "protein": 10, "...": "same keys as macros" }
 }
 ```
-</details>
 
-The parser is loose on purpose, because no two models return the same thing twice. If
-`totals` is missing it adds up the items instead. If `mealType` comes back as
-"Morning / Breakfast" it still matches. If the JSON is broken it just logs whatever you
-pasted as plain text so you don't lose the entry.
+`parseFoodJson` is deliberately tolerant, since model output varies:
 
-## What's in it
+- Returns `null` if the object has none of `rawInput`, `items` or `totals`, rather than
+  logging a partial entry
+- Falls back to summing `items` when `totals` is missing. Uses `??` rather than `||` so a
+  genuine `0` is not treated as absent
+- Matches `mealType` by substring, so casing and prefixes do not break it
+- If `JSON.parse` throws, the input is logged as a plain text description instead
 
-- Daily screen: net intake (eaten minus burned), protein, fiber, water, sleep, goals. Six
-  more nutrients behind a toggle.
-- Log tab for food, water, workouts and sleep
-- Three ways to add food: type it, paste JSON, or the chat
-- Protein streak calendar. It skips today, because at 9am you obviously haven't hit your
-  target yet and breaking the streak for that is annoying.
-- 7 day chart, intake vs burned
-- Guest login you can upgrade to a real account later without losing your history
-- Export everything as JSON
-- Installs as a PWA
+## Data model
 
-## Stack
-
-Next.js 15 (App Router) + React 19, TypeScript, Tailwind v4, Supabase for auth and Postgres,
-Recharts, Motion, deployed on Vercel.
-
-The choices I'd actually defend: Supabase because I didn't want to run a database. One table
-with a `jsonb` column because five entry types in five tables means five queries and five
-sets of CRUD. TypeScript because the union on `type` caught real bugs when I added sleep.
-
-One I'm less sure about. I'm using Next as basically a single page app with one API route.
-Vite would have been lighter. I picked Next partly because it's what you're expected to know.
-
-## How it's wired
-
-```
-page.tsx ──owns──> activeTab, selectedDate
-    │
-    ├──calls──> useDailyLog()  ──> Supabase
-    │
-    └──props──> tabs ──> forms
-```
-
-State goes one direction and no tab talks to Supabase. Everything goes through
-`useDailyLog`, which is the only file that knows the database exists. That's why the
-dashboard can't end up disagreeing with the history screen.
-
-Saving a meal:
-
-```
-type meal -> onAdd prop -> addFood -> insert
-                             |-> setEntries   (screen, right away)
-                             +-> supabase     (disk, after)
-                                      |
-                     HomeTab: filter -> reduce -> number changes
-```
-
-The entry goes into React state before the network request is sent, so there's no spinner.
-And the dashboard totals aren't stored anywhere, they get recalculated from `entries` on
-every render, so there's nothing to update when you delete something.
-
-| Path | What it does |
-|---|---|
-| `app/` | Routing. Two pages and one API route. |
-| `app/providers.tsx` | The `'use client'` boundary. Only exists because `layout.tsx` runs on the server and `AuthProvider` needs state. |
-| `app/page.tsx` | Shell. Holds the tab and date, three auth gates, renders the active tab. |
-| `app/api/chat/route.ts` | AI proxy. Exists so the API key stays off the client. |
-| `hooks/use-daily-log.ts` | The data layer. Types, the fetch, every mutation. Called once. |
-| `backend/` | Supabase client and auth wrappers. |
-| `components/tabs/` | One file per screen. They get data and functions as props. |
-| `components/QuickAdds.tsx` | The five input forms, plus `parseFoodJson` which the paste flow and the chat both use. |
-| `components/modals/` | 7 day chart and the streak calendar. |
-| `supabase/migrations/` | One table, one RLS policy. |
-
-## Data
-
-Everything is one table. The fields every entry type shares are real columns, the rest goes
-in `jsonb`.
+One table for all five entry types. Fields common to every type are columns; the rest goes in
+`jsonb`. `rowFor` and `entryFor` in `use-daily-log.ts` convert between the flat object the app
+uses and this shape.
 
 ```sql
 create table entries (
@@ -154,42 +163,45 @@ create table entries (
   created_at timestamptz not null default now()
 );
 
+create index entries_user_ts_idx on entries (user_id, timestamp desc);
+
 create policy "own rows" on entries
   for all
   using      (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 ```
 
-That policy is the whole security model. It runs in Postgres, not in my code, so a bug in
-the frontend still can't read someone else's rows. The anon key being public is fine for
-the same reason.
+Access control is entirely this policy. It runs in Postgres, so client code cannot bypass it.
 
-## Running it
+`timestamp` is `bigint` and PostgREST serialises it as a string, so `entryFor` coerces it back
+with `Number()`. Without that, date comparisons silently fail and every day reads as empty.
+There is a dev-only `console.assert` covering that round trip.
 
-Needs Node 18+ and a Supabase project.
+## Auth
 
-```bash
-npm install
-cp .env.example .env.local    # add your Supabase URL and anon key
-npm run dev
-```
+Supabase Auth. `AuthProvider` fetches the session on mount and subscribes to
+`onAuthStateChange`; the subscription is cleaned up on unmount. `page.tsx` redirects to
+`/login` when there is no user, and shows a name-entry screen until `display_name` is set.
 
-Then run the two files in `supabase/migrations/` in the Supabase SQL editor.
+Anonymous sign in is supported. `linkEmail` attaches an email and password to the existing
+anonymous user via `updateUser`, so the uid and all existing rows are preserved.
 
-`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are public, they ship to the
-browser and that's intended. `GEMINI_API_KEY` has no prefix on purpose so it stays server
-side, and it's optional unless you want the in-app chat.
+The fetch effect in `use-daily-log.ts` uses a `cancelled` flag in its cleanup, so a response
+that arrives after the user changed is discarded rather than overwriting the new user's data.
 
-## Stuff that's broken or missing
+## Known issues
 
-Writing these down because I'd rather say it than have you find it.
-
-- If a save fails the entry stays on screen and looks fine until you refresh. It needs to
-  roll back and tell you. This is the one that actually bothers me.
-- It loads your entire history to render a single day. Fine now, not fine in a year.
-- No password reset. And a guest account that never gets an email attached is unrecoverable.
-- No error boundaries, so one malformed entry could take out a whole tab.
-- Some of the text is 8px and a few of the greys are too dim. Looks good on my phone and
-  probably nowhere else.
-- No tests. There's one `console.assert` on the row/entry mapping in `use-daily-log.ts`
-  because that's the spot where data would get silently mangled and I'd never notice.
+- Optimistic writes are not rolled back. If the Supabase insert fails, the entry stays on
+  screen and only disappears on reload. Errors currently go to `console.error` only.
+- The initial fetch has no date range or limit. It loads every entry the user has ever
+  created in order to render one day.
+- No password reset flow. An anonymous account that never calls `linkEmail` cannot be
+  recovered.
+- No error boundaries, so a render error in one card takes down the whole tab.
+- Several labels are 8px and some grey text falls below WCAG contrast minimums.
+- `/api/chat` has authentication but no rate limiting of its own.
+- Dates use browser-local time throughout, so entries can appear to shift day across
+  timezones.
+- No test suite. The only automated check is the `console.assert` on the row/entry mapping.
+- `package.json` still carries `@hookform/resolvers` and `class-variance-authority`, neither
+  of which is imported anywhere.
