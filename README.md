@@ -6,7 +6,7 @@ shows the day's net calories (eaten minus burned) along with macro and micronutr
 Next.js 15 (App Router) with React 19 and TypeScript on the front, Supabase for auth and
 Postgres, deployed on Vercel.
 
-Live: _<!-- put your Vercel URL here -->_
+Live: https://aapexx.vercel.app
 
 <!--
 Screenshots: add these three, then uncomment.
