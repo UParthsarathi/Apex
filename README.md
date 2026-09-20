@@ -1,54 +1,48 @@
 # Apex Protocol
 
-A nutrition and habit tracker built around one number: your calorie deficit.
+Calorie tracker I built for myself. The thing it does differently: you log meals using
+whatever LLM you already pay for, instead of me paying for one.
 
-**Log a meal by describing it to any LLM you already use — no API key required.**
-
-> **Live demo:** _<!-- ← replace this line with your Vercel URL -->_
+Live: _<!-- put your Vercel URL here -->_
 
 <!--
-SCREENSHOTS — add these and uncomment the block below. Three is enough:
-  docs/daily.png       the Daily dashboard with real data, micros drawer open
-  docs/json.png        the Log textarea showing the "JSON DETECTED" badge
-  docs/streak.png      the consistency calendar with a streak running
+Screenshots: add these three, then uncomment.
+  docs/daily.png    Daily screen with real data, micros open
+  docs/json.png     the Log box showing "JSON DETECTED"
+  docs/streak.png   consistency calendar with a streak going
 
-| Daily dashboard | Paste workflow | Consistency |
+| | | |
 |---|---|---|
 | ![](docs/daily.png) | ![](docs/json.png) | ![](docs/streak.png) |
 -->
 
----
+## Why I built it
 
-## The problem
+I've tried tracking calories three times and quit three times. Never because an app was
+missing a feature. It was always that logging a meal took too long, so I'd skip one, and
+once the day's number was wrong I stopped checking it at all.
 
-Weight loss is a calorie deficit. Almost nobody fails because they don't know that — they
-fail because logging is slow enough to skip, and once you skip a meal the day's number is
-wrong, so you stop looking at it.
+So three things had to be true. Logging fast. The deficit number is the first thing I see,
+not buried under a menu. And something that shows me a streak, so one bad day doesn't feel
+like the whole thing is over.
 
-So this is built around three things:
+## Logging with your own LLM
 
-1. **Logging is fast** — two taps and a sentence, or one paste
-2. **The number that matters is on the first screen** — net intake, nothing else competing
-3. **Consistency is visible** — a protein streak, deliberately forgiving
+Settings → JSON Protocol Format → Copy. Paste that into ChatGPT or Claude or whatever you
+have open, say what you ate, paste the answer back into the app. It notices it's JSON and
+logs the meal with all twelve nutrients.
 
----
+Paste an array and it'll do a whole day in one go.
 
-## Logging by LLM, without an API key
+I did it this way because the alternative is me paying per user and rate limiting everyone.
+This costs me nothing, there's no quota, and your food log never goes through my server.
 
-Most apps bolt on an AI and pay per user. This one **publishes the contract instead.**
-
-1. **Settings → JSON Protocol Format → Copy**
-2. Paste it into ChatGPT, Claude, Gemini — whatever you already have open
-3. Tell it what you ate
-4. Paste the JSON back into the app
-
-The textarea detects JSON, parses it, and logs the meal with all twelve nutrients.
-Paste an **array** and it logs a whole day at once.
-
-No API key. No rate limit. No per-user cost. And your food data never touches my server.
+There's also a built-in chat that does the same thing on my API key. It's on a free tier
+capped at 5 requests a minute and it 503s when the model is busy, which is why the paste
+flow is the main path and not the fallback.
 
 <details>
-<summary><b>The schema</b> (also available in-app with a Copy button)</summary>
+<summary>The JSON format (there's a copy button for this in the app)</summary>
 
 ```json
 {
@@ -72,104 +66,83 @@ No API key. No rate limit. No per-user cost. And your food data never touches my
   }
 }
 ```
-
-The parser is tolerant on purpose, because LLM output isn't deterministic:
-
-- If `totals` is missing, it sums `items` instead
-- If the object has none of `rawInput` / `items` / `totals`, it's rejected rather than half-logged
-- `mealType` is matched fuzzily, so `Breakfast`, `breakfast` and `Morning / Breakfast` all work
-- If the JSON won't parse at all, the text is logged as a plain description — you never lose the entry
-
 </details>
 
-There's also a built-in AI chat that does the same thing without leaving the app. It runs on my
-key and a free tier capped at 5 requests/minute — which is exactly the constraint that made the
-paste workflow the primary path.
+The parser is loose on purpose, because no two models return the same thing twice. If
+`totals` is missing it adds up the items instead. If `mealType` comes back as
+"Morning / Breakfast" it still matches. If the JSON is broken it just logs whatever you
+pasted as plain text so you don't lose the entry.
 
----
+## What's in it
 
-## Features
+- Daily screen: net intake (eaten minus burned), protein, fiber, water, sleep, goals. Six
+  more nutrients behind a toggle.
+- Log tab for food, water, workouts and sleep
+- Three ways to add food: type it, paste JSON, or the chat
+- Protein streak calendar. It skips today, because at 9am you obviously haven't hit your
+  target yet and breaking the streak for that is annoying.
+- 7 day chart, intake vs burned
+- Guest login you can upgrade to a real account later without losing your history
+- Export everything as JSON
+- Installs as a PWA
 
-- **Daily dashboard** — net intake (eaten − burned), protein and fiber against targets, water,
-  sleep with a quality rating, goal completion, and a micros drawer with six more nutrients
-- **Four entry modules** — nutrition, hydration, activity, sleep
-- **Three ways to log food** — type it, paste LLM JSON, or use the in-app chat
-- **Consistency calendar** — a protein streak that skips today rather than punishing you at 9am
-- **7-day chart** — intake vs calories burned
-- **Guest accounts** — start without signing up, attach an email later, keep all your history
-- **Data export** — download your entire log as JSON
-- **Installable PWA** — standalone app on mobile
+## Stack
 
----
+Next.js 15 (App Router) + React 19, TypeScript, Tailwind v4, Supabase for auth and Postgres,
+Recharts, Motion, deployed on Vercel.
 
-## Tech stack
+The choices I'd actually defend: Supabase because I didn't want to run a database. One table
+with a `jsonb` column because five entry types in five tables means five queries and five
+sets of CRUD. TypeScript because the union on `type` caught real bugs when I added sleep.
 
-| Choice | Why |
-|---|---|
-| **React 19** | UI as a function of state. One saved meal changes five numbers at once — I'd rather describe the result than update each one. |
-| **Next.js 15** (App Router) | File-based routing, plus a server runtime in the same project. The AI endpoint has to hold an API key; without it I'd run a separate backend for one route. |
-| **TypeScript** | Five entry types share one table. A discriminated union on `type` makes `entry.meal` only valid when `entry.type === 'food'`. |
-| **Supabase** | Auth, Postgres and row-level security in one product I don't have to operate. |
-| **Postgres + jsonb** | Shared fields are columns, type-specific fields ride in `jsonb`. One table, one query, five entry types. |
-| **Tailwind v4** | Styling stays in the component. No dead CSS when a component is deleted. |
-| **Motion** | Layout animations — the sliding nav indicator is `layoutId`, two lines instead of measuring positions. |
-| **Recharts** | Declarative charts. Heavy, which is why it's lazy-loaded. |
-| **date-fns** | Every screen is date-scoped. `isSameDay` and `eachDayOfInterval` do work that's easy to get subtly wrong. |
-| **Vercel** | Git push deploys, zero build config. |
+One I'm less sure about. I'm using Next as basically a single page app with one API route.
+Vite would have been lighter. I picked Next partly because it's what you're expected to know.
 
----
-
-## Architecture
-
-State flows one way. **No tab imports the database** — there's exactly one place data can change,
-which is why the dashboard can't disagree with the history screen.
+## How it's wired
 
 ```
-page.tsx ──owns──▶ activeTab, selectedDate
+page.tsx ──owns──> activeTab, selectedDate
     │
-    ├──calls──▶ useDailyLog()  ──▶ Supabase
+    ├──calls──> useDailyLog()  ──> Supabase
     │
-    └──props──▶ tabs ──▶ forms
+    └──props──> tabs ──> forms
 ```
 
-Logging a meal, end to end:
+State goes one direction and no tab talks to Supabase. Everything goes through
+`useDailyLog`, which is the only file that knows the database exists. That's why the
+dashboard can't end up disagreeing with the history screen.
+
+Saving a meal:
 
 ```
-type meal → onAdd prop → addFood → insert
-                           ├─▶ setEntries   (screen, immediately)
-                           └─▶ supabase     (disk, after)
-                                    ↓
-                    HomeTab: filter → reduce → number changes
+type meal -> onAdd prop -> addFood -> insert
+                             |-> setEntries   (screen, right away)
+                             +-> supabase     (disk, after)
+                                      |
+                     HomeTab: filter -> reduce -> number changes
 ```
 
-That's an **optimistic update** — the entry enters React state before the network request is
-sent, which is why logging feels instant. The dashboard totals are **derived**, never stored, so
-they can't go stale when an entry is deleted.
+The entry goes into React state before the network request is sent, so there's no spinner.
+And the dashboard totals aren't stored anywhere, they get recalculated from `entries` on
+every render, so there's nothing to update when you delete something.
 
-### What each folder is responsible for
-
-| Path | Responsibility |
+| Path | What it does |
 |---|---|
-| `app/` | Routing. Two pages (`/`, `/login`) and one API route (`/api/chat`). |
-| `app/layout.tsx` | HTML shell, font, global CSS, PWA manifest. Server component. |
-| `app/providers.tsx` | The `'use client'` boundary — exists so `AuthProvider` can use state inside a server-rendered layout. |
-| `app/page.tsx` | App shell. Owns tab + date state, three auth gates, renders the active tab. No business logic. |
-| `app/api/chat/route.ts` | Server-side AI proxy. Exists so the API key never reaches the browser. |
-| `hooks/use-daily-log.ts` | **The entire data layer** — types, the fetch, and every mutation. Called once, at the top. |
-| `backend/` | Supabase client (memoised) and the auth wrappers. |
-| `components/tabs/` | One file per screen. They receive data and functions as props and render. |
-| `components/QuickAdds.tsx` | Five input forms plus `parseFoodJson`, shared by the paste flow and the AI chat. |
-| `components/AuthProvider.tsx` | Session lifecycle and the `useAuth()` context. |
-| `components/modals/` | The 7-day chart and the consistency calendar. |
-| `lib/utils.ts` | `cn()` — merges Tailwind classes. Six lines. |
+| `app/` | Routing. Two pages and one API route. |
+| `app/providers.tsx` | The `'use client'` boundary. Only exists because `layout.tsx` runs on the server and `AuthProvider` needs state. |
+| `app/page.tsx` | Shell. Holds the tab and date, three auth gates, renders the active tab. |
+| `app/api/chat/route.ts` | AI proxy. Exists so the API key stays off the client. |
+| `hooks/use-daily-log.ts` | The data layer. Types, the fetch, every mutation. Called once. |
+| `backend/` | Supabase client and auth wrappers. |
+| `components/tabs/` | One file per screen. They get data and functions as props. |
+| `components/QuickAdds.tsx` | The five input forms, plus `parseFoodJson` which the paste flow and the chat both use. |
+| `components/modals/` | 7 day chart and the streak calendar. |
 | `supabase/migrations/` | One table, one RLS policy. |
 
----
+## Data
 
-## Data model
-
-One table for all five entry types. Shared fields are real columns and get indexed;
-everything type-specific rides in `jsonb`.
+Everything is one table. The fields every entry type shares are real columns, the rest goes
+in `jsonb`.
 
 ```sql
 create table entries (
@@ -177,7 +150,7 @@ create table entries (
   user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
   type       text not null check (type in ('food','workout','task','sleep','water')),
   timestamp  bigint not null,     -- epoch ms
-  data       jsonb  not null,     -- meal, calories, quality, amount…
+  data       jsonb  not null,
   created_at timestamptz not null default now()
 );
 
@@ -187,47 +160,36 @@ create policy "own rows" on entries
   with check (user_id = (select auth.uid()));
 ```
 
-That policy is the entire security boundary, and it's enforced by Postgres rather than by
-client code — so a bug in the frontend still can't read someone else's rows. The anon key is
-public by design; RLS is what protects the data.
+That policy is the whole security model. It runs in Postgres, not in my code, so a bug in
+the frontend still can't read someone else's rows. The anon key being public is fine for
+the same reason.
 
----
+## Running it
 
-## Running locally
-
-Requires Node 18+ and a Supabase project.
+Needs Node 18+ and a Supabase project.
 
 ```bash
 npm install
-cp .env.example .env.local     # fill in your Supabase URL + anon key
-npm run dev                    # http://localhost:3000
+cp .env.example .env.local    # add your Supabase URL and anon key
+npm run dev
 ```
 
-Then run `supabase/migrations/0001_init.sql` and `0002_rls_initplan.sql` in the Supabase
-SQL editor.
+Then run the two files in `supabase/migrations/` in the Supabase SQL editor.
 
-| Variable | Scope |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Public — ships to the browser |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public — RLS is the real boundary |
-| `GEMINI_API_KEY` | **Server only.** No `NEXT_PUBLIC_` prefix, or it leaks into the client bundle. Optional — only the in-app chat needs it. |
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are public, they ship to the
+browser and that's intended. `GEMINI_API_KEY` has no prefix on purpose so it stays server
+side, and it's optional unless you want the in-app chat.
 
----
+## Stuff that's broken or missing
 
-## Known limitations
+Writing these down because I'd rather say it than have you find it.
 
-Things I'd fix before anyone else relied on this:
-
-- **Optimistic updates have no rollback.** If a write fails, the entry stays on screen and looks
-  saved until a refresh. For a food tracker that's the worst class of bug — silent data loss.
-  First thing on the list.
-- **The initial fetch is unbounded** — it loads every entry a user has ever made to render one
-  day. Fine at three months, wrong at three years. Needs a date range on the query.
-- **No password reset.** Guest accounts can also strand data if they're never upgraded to email.
-- **No error boundaries** — a malformed entry could take down an entire tab instead of one card.
-- **Accessibility needs work** — some labels are 8px and several greys fall below WCAG contrast.
-- **No test suite.** The one check that exists is a dev-only `console.assert` on the row↔entry
-  mapping in `hooks/use-daily-log.ts`, because that's the single place data can be silently
-  corrupted.
-- **The in-app AI chat is rate-limited** to 5 requests/minute on the free tier, and returns 503s
-  when the upstream model is under load. The paste workflow exists partly because of this.
+- If a save fails the entry stays on screen and looks fine until you refresh. It needs to
+  roll back and tell you. This is the one that actually bothers me.
+- It loads your entire history to render a single day. Fine now, not fine in a year.
+- No password reset. And a guest account that never gets an email attached is unrecoverable.
+- No error boundaries, so one malformed entry could take out a whole tab.
+- Some of the text is 8px and a few of the greys are too dim. Looks good on my phone and
+  probably nowhere else.
+- No tests. There's one `console.assert` on the row/entry mapping in `use-daily-log.ts`
+  because that's the spot where data would get silently mangled and I'd never notice.
