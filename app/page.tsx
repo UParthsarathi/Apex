@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, History, CheckSquare, User, Zap, Calendar, BarChart2 } from 'lucide-react';
+import { Home, History, CheckSquare, User, Zap, Calendar, BarChart2, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,11 @@ export default function App() {
     addSleep,
     toggleTask,
     deleteEntry,
-    isLoaded
+    isLoaded,
+    loadError,
+    retryLoad,
+    saveError,
+    dismissSaveError
   } = useDailyLog();
 
   if (!isLoaded || authLoading) {
@@ -70,6 +74,22 @@ export default function App() {
   // Required first-run step: every account (guest or email) must set a display name.
   if (!user.user_metadata?.display_name) return <NameGate />;
 
+  // A failed load must not render as an empty log: that reads as "my data is gone".
+  if (loadError) {
+    return (
+      <div className="flex h-[100dvh] flex-col items-center justify-center gap-5 bg-black px-8 text-center">
+        <p className="small-caps !text-red-400">Couldn&apos;t load</p>
+        <p className="max-w-xs text-sm font-light leading-relaxed text-white/60">{loadError}</p>
+        <button
+          onClick={retryLoad}
+          className="rounded-2xl border border-white/10 bg-white/5 px-8 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 transition-all hover:bg-white/10 active:scale-95"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   const handleDateJump = (date: Date) => {
     setSelectedDate(date);
     setActiveTab('home');
@@ -77,6 +97,15 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden selection:bg-[#00FF88]/30 font-sans">
+
+      {saveError && (
+        <div role="alert" className="fixed top-20 left-1/2 z-[70] flex w-[90%] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-red-500/30 bg-[#1a0a0a] px-4 py-3 text-xs text-red-200 shadow-2xl shadow-black">
+          <span className="flex-1 leading-relaxed">{saveError}</span>
+          <button onClick={dismissSaveError} aria-label="Dismiss" className="text-red-200/60 hover:text-red-100">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Global Top Controls */}
       <div className="fixed top-6 left-5 z-[60]">
