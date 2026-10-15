@@ -118,6 +118,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 export function useDailyLog() {
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id; // refetch only when the account changes, not on every token refresh
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -125,7 +126,7 @@ export function useDailyLog() {
     if (authLoading) return;
     const supabase = getSupabase();
 
-    if (!user || !supabase) {
+    if (!userId || !supabase) {
       setEntries([]);
       setIsLoaded(true); // no session — page.tsx redirects to /login
       return;
@@ -157,7 +158,7 @@ export function useDailyLog() {
     })();
 
     return () => { cancelled = true; };
-  }, [user?.id, authLoading]);
+  }, [userId, authLoading]);
 
   // optimistic local insert + single-row write; user_id fills from auth.uid() default
   const insert = (entry: LogEntry) => {
