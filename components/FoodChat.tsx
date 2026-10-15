@@ -33,8 +33,9 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
         },
         body: JSON.stringify({ messages: next }),
       });
-      const data = await res.json();
-      const reply = res.ok && data.text ? data.text : `Something went wrong (${data.error || res.status}). Try again.`;
+      // A timeout or proxy error page isn't JSON; that is a server problem, not "Network error".
+      const data = await res.json().catch(() => ({}));
+      const reply = res.ok && data.text ? data.text : data.error ?? `Something went wrong (${res.status}). Try again.`;
       setMessages([...next, { role: 'model', text: reply }]);
     } catch {
       setMessages([...next, { role: 'model', text: 'Network error — try again.' }]);
