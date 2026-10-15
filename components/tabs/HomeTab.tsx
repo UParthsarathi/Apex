@@ -7,6 +7,7 @@ import { ChevronDown, Droplets, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry, WaterEntry, NUTRIENT_KEYS, NutrientKey } from '@/hooks/use-daily-log';
 import { DateNavigator } from '@/components/DateNavigator';
+import { formatAmount, toNumber } from '@/lib/totals';
 
 // Fixed daily values. "Cap" = stay under (number turns amber at 80%, red over);
 // "goal" = reach for (stays neutral — no alarm for not enough iron by lunch).
@@ -27,8 +28,8 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
   const waterEntries = todayEntries.filter(e => e.type === 'water') as WaterEntry[];
 
   const completedTasks = tasks.filter(t => t.completed).length;
-  const totalBurned = workouts.reduce((sum, w) => sum + w.calories, 0);
-  const totalWater = waterEntries.reduce((sum, w) => sum + w.amount, 0);
+  const totalBurned = workouts.reduce((sum, w) => sum + toNumber(w.calories), 0);
+  const totalWater = waterEntries.reduce((sum, w) => sum + toNumber(w.amount), 0);
 
   const sleepEntries = todayEntries.filter(e => e.type === 'sleep') as SleepEntry[];
   const coreSleep = sleepEntries.filter(s => s.category !== 'Nap').reduce((sum, s) => sum + s.duration, 0);
@@ -39,7 +40,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
     : 0;
 
   const nutrition = Object.fromEntries(
-    NUTRIENT_KEYS.map(k => [k, food.reduce((s, f) => s + (Number(f[k]) || 0), 0)])
+    NUTRIENT_KEYS.map(k => [k, food.reduce((s, f) => s + toNumber(f[k]), 0)])
   ) as Record<NutrientKey, number>;
 
   const [showMicros, setShowMicros] = useState(false);
@@ -89,7 +90,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
             <span className="small-caps text-white/30 !tracking-widest">Net Intake</span>
             <div className="flex items-baseline gap-2">
                <span className="text-4xl font-extralight tracking-tighter text-white/90">
-                 {nutrition.calories - totalBurned}
+                 {formatAmount(nutrition.calories - totalBurned)}
                </span>
                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest whitespace-nowrap">kcal</span>
             </div>
@@ -98,11 +99,11 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
           <div className="relative z-10 flex gap-4 text-right">
             <div className="space-y-0">
                <span className="text-[8px] font-bold text-[#00FF88]/40 uppercase tracking-widest">Eaten</span>
-               <p className="text-xl font-light leading-none text-white/80">{nutrition.calories}</p>
+               <p className="text-xl font-light leading-none text-white/80">{formatAmount(nutrition.calories)}</p>
             </div>
             <div className="space-y-0 text-orange-500/80">
                <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest">Burned</span>
-               <p className="text-xl font-light leading-none">{totalBurned}</p>
+               <p className="text-xl font-light leading-none">{formatAmount(totalBurned)}</p>
             </div>
           </div>
         </div>
@@ -111,7 +112,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
         <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-violet-500/10 bg-violet-500/[0.02] group">
            <div className="flex items-center justify-between">
               <span className="small-caps !text-violet-400/40 text-[8px] !tracking-[0.2em]">Protein</span>
-              <span className="text-base font-light font-mono tabular-nums text-violet-100/80">{nutrition.protein}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
+              <span className="text-base font-light font-mono tabular-nums text-violet-100/80">{formatAmount(nutrition.protein)}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
            </div>
            <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
               <motion.div
@@ -125,7 +126,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
         <div className="col-span-2 bento-card flex flex-col gap-2.5 p-4 border-emerald-500/10 bg-emerald-500/[0.02] group">
            <div className="flex items-center justify-between">
               <span className="small-caps !text-emerald-400/40 text-[8px] !tracking-[0.2em]">Fiber</span>
-              <span className="text-base font-light font-mono tabular-nums text-emerald-100/80">{nutrition.fiber}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
+              <span className="text-base font-light font-mono tabular-nums text-emerald-100/80">{formatAmount(nutrition.fiber)}<small className="text-[8px] opacity-20 ml-0.5">g</small></span>
            </div>
            <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
               <motion.div
@@ -143,7 +144,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
             <Droplets size={12} className="text-blue-400/40" />
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-light text-blue-400/90 leading-none tabular-nums">{totalWater}</span>
+            <span className="text-2xl font-light text-blue-400/90 leading-none tabular-nums">{formatAmount(totalWater)}</span>
             <span className="text-[8px] text-blue-400/20 uppercase font-bold tracking-widest">ml</span>
           </div>
           <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden mt-1">
@@ -175,22 +176,22 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
         </div>
 
         <div className="bento-card p-3 flex flex-col items-center gap-1 border-amber-500/5 bg-amber-500/[0.02]">
-           <span className="text-base font-light text-amber-400/80 leading-none">{nutrition.carbs}g</span>
+           <span className="text-base font-light text-amber-400/80 leading-none">{formatAmount(nutrition.carbs)}g</span>
            <span className="text-[7px] font-bold tracking-[0.2em] text-amber-500/20 uppercase">Carbs</span>
         </div>
 
         <div className="bento-card p-3 flex flex-col items-center gap-1 border-rose-500/5 bg-rose-500/[0.02]">
-           <span className="text-base font-light text-rose-500/80 leading-none">{nutrition.fat}g</span>
+           <span className="text-base font-light text-rose-500/80 leading-none">{formatAmount(nutrition.fat)}g</span>
            <span className="text-[7px] font-bold tracking-[0.2em] text-rose-500/20 uppercase">Fats</span>
         </div>
 
         <div className="bento-card p-3 flex flex-col items-center gap-1 border-white/5 bg-white/[0.02]">
-           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sugar, CAP.sugar) ?? "text-white/80")}>{nutrition.sugar}g</span>
+           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sugar, CAP.sugar) ?? "text-white/80")}>{formatAmount(nutrition.sugar)}g</span>
            <span className="text-[7px] font-bold tracking-[0.2em] text-white/20 uppercase">Sugar</span>
         </div>
 
         <div className="bento-card p-3 flex flex-col items-center gap-1 border-white/5 bg-white/[0.02]">
-           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sodium, CAP.sodium) ?? "text-white/80")}>{nutrition.sodium}<small className="text-[8px] opacity-40 ml-0.5">mg</small></span>
+           <span className={cn("text-base font-light leading-none tabular-nums", capColor(nutrition.sodium, CAP.sodium) ?? "text-white/80")}>{formatAmount(nutrition.sodium)}<small className="text-[8px] opacity-40 ml-0.5">mg</small></span>
            <span className="text-[7px] font-bold tracking-[0.2em] text-white/20 uppercase">Sodium</span>
         </div>
 
@@ -222,7 +223,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
                   "text-sm font-light leading-none tabular-nums",
                   (m.cap && capColor(m.value, m.cap)) || "text-white/80"
                 )}>
-                  {m.value}<small className="text-[8px] opacity-30 ml-0.5">{m.unit}</small>
+                  {formatAmount(m.value)}<small className="text-[8px] opacity-30 ml-0.5">{m.unit}</small>
                   {(m.cap ?? m.goal) != null && <span className="text-[8px] text-white/15 ml-1">/ {m.cap ?? m.goal}</span>}
                 </span>
                 <span className="text-[7px] font-bold tracking-[0.2em] text-white/15 uppercase">{m.label}</span>

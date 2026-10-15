@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogEntry, TaskEntry } from '@/hooks/use-daily-log';
+import { formatAmount, toNumber } from '@/lib/totals';
 
 export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: () => void }) {
   const time = format(entry.timestamp, 'HH:mm');
@@ -56,11 +57,11 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
                      </div>
                      <div className="flex gap-2">
                        <span className="text-white/20 font-mono tracking-tighter tabular-nums">
-                         {item.macros?.calories ?? 0}
+                         {formatAmount(toNumber(item.macros?.calories))}
                          <small className="text-[6px] ml-0.5 opacity-30 uppercase font-sans">kcal</small>
                        </span>
                        <span className="text-indigo-400/20 font-mono tracking-tighter tabular-nums">
-                         {item.macros?.protein ?? 0}g
+                         {formatAmount(toNumber(item.macros?.protein))}g
                        </span>
                      </div>
                    </div>
@@ -83,9 +84,9 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
                    { label: 'k', val: entry.potassium, color: 'text-white' },
                    { label: 'ca', val: entry.calcium, color: 'text-white' },
                    { label: 'fe', val: entry.iron, color: 'text-white' },
-                 ].filter(m => m.val).map(m => (
+                 ].filter(m => toNumber(m.val)).map(m => (
                    <div key={m.label} className="flex items-baseline gap-0.5">
-                     <span className={cn("text-xs font-light opacity-60", m.color)}>{m.val}</span>
+                     <span className={cn("text-xs font-light opacity-60", m.color)}>{formatAmount(toNumber(m.val))}</span>
                      <span className="text-[7px] font-bold text-white/5 uppercase tracking-tighter">{m.label}</span>
                    </div>
                  ))}

@@ -1,47 +1,34 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format, isToday, isSameDay, subDays, eachDayOfInterval, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
+import { format, isToday, subDays, eachDayOfInterval, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LogEntry, FoodEntry } from '@/hooks/use-daily-log';
+import { LogEntry } from '@/hooks/use-daily-log';
+import { currentStreak, dayKey, proteinByDay } from '@/lib/totals';
+
+// 50-90 g target: 1 = reached 90 g, 0.5 = reached the 50 g floor.
+function proteinStatus(byDay: Map<string, number>, date: Date) {
+  const protein = byDay.get(dayKey(date)) ?? 0;
+  return { protein, ratio: protein >= 90 ? 1 : protein >= 50 ? 0.5 : 0 };
+}
 
 export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean, onClose: () => void, entries: LogEntry[] }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()));
 
-  // Protein status for any date, computed from all entries (no 30-day window).
-  const proteinForDay = (date: Date) => {
-    const food = entries.filter(e => e.type === 'food' && isSameDay(e.timestamp, date)) as FoodEntry[];
-    const protein = food.reduce((sum, f) => sum + (f.protein || 0), 0);
-    let ratio = 0; // 50-90g target
-    if (protein >= 90) ratio = 1;
-    else if (protein >= 50) ratio = 0.5;
-    return { protein, ratio };
-  };
+  // Protein per local day, computed once per data change; every view below reads from it.
+  const byDay = useMemo(() => proteinByDay(entries), [entries]);
 
-  // Streak + stats stay a rolling 30-day window (momentum is recent by nature).
+  // Stats stay a rolling 30-day window (momentum is recent by nature).
   const dayStats = useMemo(() => {
     const today = startOfToday();
     return Array.from({ length: 30 }, (_, i) => subDays(today, 29 - i))
-      .map(date => ({ date, ...proteinForDay(date) }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries]);
+      .map(date => ({ date, ...proteinStatus(byDay, date) }));
+  }, [byDay]);
 
-  const streak = useMemo(() => {
-    let currentStreak = 0;
-    const sortedDays = [...dayStats].reverse();
-    for (const day of sortedDays) {
-      if (day.ratio >= 0.5) {
-        currentStreak++;
-      } else if (isToday(day.date)) {
-        continue;
-      } else {
-        break;
-      }
-    }
-    return currentStreak;
-  }, [dayStats]);
+  // The streak itself is not capped at 30 days.
+  const streak = useMemo(() => currentStreak(byDay, startOfToday()), [byDay]);
 
   const stats = useMemo(() => {
     const perfectDays = dayStats.filter(d => d.ratio === 1).length;
@@ -60,10 +47,9 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
       date,
       isCurrentMonth: isSameMonth(date, viewMonth),
       isToday: isToday(date),
-      ...proteinForDay(date)
+      ...proteinStatus(byDay, date)
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, viewMonth]);
+  }, [byDay, viewMonth]);
 
   return (
     <AnimatePresence>

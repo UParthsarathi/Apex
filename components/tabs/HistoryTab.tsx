@@ -6,6 +6,7 @@ import { History, Activity } from 'lucide-react';
 import { LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry, WaterEntry } from '@/hooks/use-daily-log';
 import { LogEntryCard } from '@/components/LogEntryCard';
 import { parseDayKey } from '@/lib/dates';
+import { formatAmount, toNumber } from '@/lib/totals';
 
 export function HistoryTab({ entries, deleteEntry, onDateJump }: {
   entries: LogEntry[],
@@ -107,15 +108,15 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
 
             const stats = dayEntries.reduce((acc, e) => {
               if (e.type === 'food') {
-                acc.calories += (e.calories || 0);
+                acc.calories += toNumber(e.calories);
               } else if (e.type === 'workout') {
-                acc.burned += (e.calories || 0);
+                acc.burned += toNumber(e.calories);
               } else if (e.type === 'sleep') {
-                acc.sleep += e.duration;
+                acc.sleep += toNumber(e.duration);
               } else if (e.type === 'task' && e.completed) {
                 acc.tasksDone += 1;
               } else if (e.type === 'water') {
-                acc.water += e.amount;
+                acc.water += toNumber(e.amount);
               }
               return acc;
             }, { calories: 0, burned: 0, tasksDone: 0, sleep: 0, water: 0 });
@@ -134,9 +135,9 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
             <h3 className="small-caps !text-[#00FF88]/80 text-[10px] !tracking-[0.2em]">{dateLabel}</h3>
           </div>
           <div className="flex gap-4 text-[8px] font-mono tracking-tighter uppercase tabular-nums items-center">
-            <span className="text-white/40"><span className="text-white/80 font-bold">{stats.calories}</span> CALS</span>
-            <span className="text-white/40"><span className="text-blue-500/80 font-bold">{stats.water}</span> ML</span>
-            <span className="text-orange-500/80 font-bold">{stats.burned} BURN</span>
+            <span className="text-white/40"><span className="text-white/80 font-bold">{formatAmount(stats.calories)}</span> CALS</span>
+            <span className="text-white/40"><span className="text-blue-500/80 font-bold">{formatAmount(stats.water)}</span> ML</span>
+            <span className="text-orange-500/80 font-bold">{formatAmount(stats.burned)} BURN</span>
             {stats.sleep > 0 && (
               <span className="text-violet-400/40">
                 <span className="text-violet-500/80 font-bold">{Math.floor(stats.sleep)}h {Math.round((stats.sleep % 1) * 60)}m</span> SLEEP

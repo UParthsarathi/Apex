@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { LogEntry } from '@/hooks/use-daily-log';
+import { formatAmount, toNumber } from '@/lib/totals';
 
 function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], selectedDate: Date }) {
   const [isMounted, setIsMounted] = useState(false);
@@ -22,8 +23,8 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
 
     return last7Days.map(day => {
       const dayEntries = entries.filter(e => isSameDay(e.timestamp, day));
-      const intake = dayEntries.reduce((sum, e) => sum + (e.type === 'food' ? (e.calories || 0) : 0), 0);
-      const activity = dayEntries.reduce((sum, e) => sum + (e.type === 'workout' ? (e.calories || 0) : 0), 0);
+      const intake = dayEntries.reduce((sum, e) => sum + (e.type === 'food' ? toNumber(e.calories) : 0), 0);
+      const activity = dayEntries.reduce((sum, e) => sum + (e.type === 'workout' ? toNumber(e.calories) : 0), 0);
       return {
         name: format(day, 'd'),
         intake,
@@ -68,11 +69,11 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
                   <div className="space-y-1">
                     <div className="flex justify-between gap-4">
                       <span className="text-[9px] text-[#00FF88] uppercase">Nutrition</span>
-                      <span className="text-[10px] font-mono text-white">{payload[0].value} kcal</span>
+                      <span className="text-[10px] font-mono text-white">{formatAmount(toNumber(payload[0].value))} kcal</span>
                     </div>
                     <div className="flex justify-between gap-4">
                       <span className="text-[9px] text-orange-400 uppercase">Activity</span>
-                      <span className="text-[10px] font-mono text-white">{payload[1].value} kcal</span>
+                      <span className="text-[10px] font-mono text-white">{formatAmount(toNumber(payload[1].value))} kcal</span>
                     </div>
                   </div>
                 </div>
