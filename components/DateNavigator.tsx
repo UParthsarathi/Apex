@@ -1,16 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
 import { format, isSameDay, subDays, addDays, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export function DateNavigator({ selectedDate, onDateChange }: { selectedDate: Date, onDateChange: (d: Date) => void }) {
-  const days = useMemo(() => {
-    return eachDayOfInterval({
-      start: subDays(new Date(), 5),
-      end: addDays(new Date(), 1)
-    });
-  }, []);
+  // Recomputed each render (7 dates, trivial) so the strip follows the real today after midnight.
+  const days = eachDayOfInterval({
+    start: subDays(new Date(), 5),
+    end: addDays(new Date(), 1)
+  });
 
   return (
     <div className="flex justify-between items-center bg-white/[0.03] border border-white/[0.05] rounded-2xl p-1">

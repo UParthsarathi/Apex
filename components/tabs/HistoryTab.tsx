@@ -5,6 +5,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { History, Activity } from 'lucide-react';
 import { LogEntry, TaskEntry, FoodEntry, WorkoutEntry, SleepEntry, WaterEntry } from '@/hooks/use-daily-log';
 import { LogEntryCard } from '@/components/LogEntryCard';
+import { parseDayKey } from '@/lib/dates';
 
 export function HistoryTab({ entries, deleteEntry, onDateJump }: {
   entries: LogEntry[],
@@ -64,7 +65,7 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
                 className="bg-white/5 border border-white/10 rounded-lg text-[10px] p-2 font-sans uppercase tracking-widest outline-none focus:border-white/20 transition-all font-bold"
               >
                 {months.map(m => (
-                  <option key={m} value={m} className="bg-neutral-900">{format(new Date(m + '-01'), 'MMMM yyyy')}</option>
+                  <option key={m} value={m} className="bg-neutral-900">{format(parseDayKey(m + '-01'), 'MMMM yyyy')}</option>
                 ))}
               </select>
             </>
@@ -82,9 +83,9 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
               className="flex-shrink-0 group flex flex-col items-center gap-1"
             >
               <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5 group-hover:border-[#00FF88]/50 flex items-center justify-center text-[10px] font-mono transition-all">
-                {format(new Date(date), 'd')}
+                {format(parseDayKey(date), 'd')}
               </div>
-              <span className="text-[6px] font-bold text-white/20 uppercase tracking-[0.1em]">{format(new Date(date), 'EEE')}</span>
+              <span className="text-[6px] font-bold text-white/20 uppercase tracking-[0.1em]">{format(parseDayKey(date), 'EEE')}</span>
             </button>
           )).reverse()}
         </div>
@@ -99,9 +100,10 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
         <div className="space-y-10 pb-24">
           {sortedDates.map(date => {
             const dayEntries = grouped[date].sort((a, b) => b.timestamp - a.timestamp);
-            let dateLabel = format(new Date(date), 'MMMM d');
-            if (isToday(new Date(date))) dateLabel = 'Today';
-            else if (isYesterday(new Date(date))) dateLabel = 'Yesterday';
+            const day = parseDayKey(date);
+            let dateLabel = format(day, 'MMMM d');
+            if (isToday(day)) dateLabel = 'Today';
+            else if (isYesterday(day)) dateLabel = 'Yesterday';
 
             const stats = dayEntries.reduce((acc, e) => {
               if (e.type === 'food') {
@@ -141,7 +143,7 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
               </span>
             )}
             <button
-              onClick={() => onDateJump(new Date(date))}
+              onClick={() => onDateJump(day)}
               className="text-[#00FF88]/40 hover:text-[#00FF88] flex items-center gap-1 transition-colors ml-2"
             >
               <Activity size={10} />

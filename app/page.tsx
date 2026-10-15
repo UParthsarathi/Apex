@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Home, History, CheckSquare, User, Zap, Calendar, BarChart2 } from 'lucide-react';
-import { startOfToday } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useDailyLog } from '@/hooks/use-daily-log';
+import { useSelectedDate } from '@/hooks/use-selected-date';
 import { useAuth } from '@/components/AuthProvider';
 import { HomeTab } from '@/components/tabs/HomeTab';
 import { HistoryTab } from '@/components/tabs/HistoryTab';
@@ -27,7 +27,7 @@ type Tab = 'home' | 'history' | 'tasks' | 'settings' | 'protocol';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
+  const [selectedDate, setSelectedDate] = useSelectedDate();
   const [showPerformance, setShowPerformance] = useState(false);
   const [showConsistency, setShowConsistency] = useState(false);
   const { user, loading: authLoading } = useAuth();

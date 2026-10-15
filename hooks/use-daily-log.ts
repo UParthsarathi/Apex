@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { getSupabase } from '@/backend/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { entryTimestamp } from '@/lib/dates';
 import { entryFor, rowFor, type FoodEntry, type FoodItem, type LogEntry, type Row, type TaskEntry } from '@/lib/entries';
 
 // Types and NUTRIENT_KEYS live in lib/entries.ts (pure, unit-tested); re-exported so existing imports keep working.
@@ -60,7 +61,7 @@ export function useDailyLog() {
     });
   };
 
-  const ts = (date?: Date) => (date ? date.getTime() : Date.now());
+  const ts = (date?: Date) => entryTimestamp(date); // real time of day, not the selected day's midnight
 
   const addFood = (
     meal: FoodEntry['meal'],
