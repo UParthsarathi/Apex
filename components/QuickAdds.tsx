@@ -4,68 +4,35 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FoodEntry, NUTRIENT_KEYS } from '@/hooks/use-daily-log';
-
-// Shared by the paste flow and the AI chat: AI-JSON -> addFood args. Null if the shape is unknown.
-export function parseFoodJson(entryData: any, fallbackMeal: FoodEntry['meal']) {
-  if (!entryData || (!entryData.rawInput && !entryData.items && !entryData.totals)) return null;
-
-  const nutrition: Record<string, unknown> = { items: entryData.items || [] };
-  for (const k of NUTRIENT_KEYS) {
-    nutrition[k] = entryData.totals?.[k] ?? (entryData.items?.reduce((sum: number, item: any) => sum + (item.macros?.[k] || 0), 0) || 0);
-  }
-
-  let meal = fallbackMeal;
-  if (entryData.mealType) {
-    const m = String(entryData.mealType).toLowerCase();
-    if (m.includes('breakfast')) meal = 'Breakfast';
-    else if (m.includes('lunch')) meal = 'Lunch';
-    else if (m.includes('snack')) meal = 'Snacks';
-    else if (m.includes('dinner')) meal = 'Dinner';
-  }
-
-  return { meal, description: entryData.rawInput || 'Encoded Component', nutrition };
-}
+import { FoodEntry } from '@/hooks/use-daily-log';
+import { looksLikeJson, parseFoodPaste } from '@/lib/food-json';
 
 export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string, nutrition?: any) => void }) {
   const [desc, setDesc] = useState('');
   const [meal, setMeal] = useState<FoodEntry['meal']>('Lunch');
   const [showMacros, setShowMacros] = useState(false);
   const [macros, setMacros] = useState({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const isJson = (desc.trim().startsWith('{') && desc.trim().endsWith('}')) || (desc.trim().startsWith('[') && desc.trim().endsWith(']'));
+  const isJson = looksLikeJson(desc);
+
+  const reset = () => {
+    setDesc('');
+    setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
+    setShowMacros(false);
+  };
 
   const handleSave = () => {
     if (!desc.trim()) return;
 
-    // Try to parse as JSON if it looks like JSON
-    if (isJson) {
-      try {
-        const data = JSON.parse(desc.trim());
-
-        const processEntry = (entryData: any) => {
-          const parsed = parseFoodJson(entryData, meal);
-          if (!parsed) return false;
-          onAdd(parsed.meal, parsed.description, parsed.nutrition);
-          return true;
-        };
-
-        if (Array.isArray(data)) {
-          data.forEach(processEntry);
-          setDesc('');
-          setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
-          setShowMacros(false);
-          return;
-        } else if (processEntry(data)) {
-          setDesc('');
-          setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
-          setShowMacros(false);
-          return;
-        }
-      } catch (e) {
-        // Fallback to normal text if JSON parse fails
-        console.warn("Input looked like JSON but failed to parse", e);
-      }
+    const pasted = parseFoodPaste(desc, meal);
+    if (pasted) {
+      // Bad JSON keeps the text in the box so it can be fixed, instead of logging it as a 0-kcal entry.
+      if ('error' in pasted) return setNotice(pasted.error);
+      for (const p of pasted.entries) onAdd(p.meal, p.description, p.nutrition);
+      const skipped = pasted.total - pasted.entries.length;
+      setNotice(skipped ? `Logged ${pasted.entries.length} of ${pasted.total}. ${skipped} ${skipped === 1 ? "wasn't" : "weren't"} in the meal format.` : null);
+      return reset();
     }
 
     const nutrition = {
@@ -76,9 +43,8 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
       fiber: macros.fiber ? parseInt(macros.fiber) : 0,
     };
     onAdd(meal, desc, nutrition);
-    setDesc('');
-    setMacros({ calories: '', protein: '', carbs: '', fat: '', fiber: '' });
-    setShowMacros(false);
+    setNotice(null);
+    reset();
   };
 
   return (
@@ -88,8 +54,9 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
     )}>
       <div className="relative">
         <textarea
+          aria-label="Meal description or JSON"
           value={desc}
-          onChange={e => setDesc(e.target.value)}
+          onChange={e => { setDesc(e.target.value); setNotice(null); }}
           placeholder="Document intake or paste JSON..."
           className="w-full bg-transparent text-base font-extralight text-white resize-none outline-none px-4 py-3 placeholder:text-white/10 h-24 leading-relaxed no-scrollbar"
         />
@@ -99,6 +66,8 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
           </div>
         )}
       </div>
+
+      {notice && <p role="status" className="px-4 text-[10px] leading-relaxed text-amber-400">{notice}</p>}
 
       <AnimatePresence>
         {showMacros && (
@@ -165,6 +134,7 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
         <button
           onClick={handleSave}
           disabled={!desc.trim()}
+          aria-label="Add meal"
           className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-5 transition-all hover:scale-105 active:scale-95 shrink-0 ml-1"
         >
           <Plus size={20} strokeWidth={2} />

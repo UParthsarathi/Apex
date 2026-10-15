@@ -4,25 +4,10 @@ import { useRef, useState } from 'react';
 import { Send, Check, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FoodEntry } from '@/hooks/use-daily-log';
-import { parseFoodJson } from '@/components/QuickAdds';
+import { extractFoodJson } from '@/lib/food-json';
 import { useAuth } from '@/components/AuthProvider';
 
 type Msg = { role: 'user' | 'model'; text: string };
-
-// The model replies conversationally, then ends with pure JSON. Strip fences
-// (belt and suspenders — the prompt forbids markdown) and try to parse.
-function extractFoodJson(text: string) {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/, '').replace(/```\s*$/, '');
-  if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) return null;
-  try {
-    const data = JSON.parse(cleaned);
-    const list = Array.isArray(data) ? data : [data];
-    const parsed = list.map(d => parseFoodJson(d, 'Lunch')).filter(Boolean) as NonNullable<ReturnType<typeof parseFoodJson>>[];
-    return parsed.length ? parsed : null;
-  } catch {
-    return null;
-  }
-}
 
 export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: string, nutrition?: any) => void }) {
   const [messages, setMessages] = useState<Msg[]>([]);
