@@ -52,7 +52,7 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
                      <div className="flex flex-col">
                        <span className="font-light text-white/50">{item.name}</span>
                        <span className="text-[7px] text-white/10 uppercase tracking-widest">
-                         {item.quantity?.value} {item.quantity?.unit}
+                         {item.quantity && formatAmount(toNumber(item.quantity.value))} {item.quantity?.unit}
                        </span>
                      </div>
                      <div className="flex gap-2">
@@ -101,7 +101,7 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
                <span className="text-[7px] text-white/10 uppercase tracking-widest mt-0.5">Hydration Protocol</span>
              </div>
              <div className="text-right">
-               <span className="text-xl font-light text-blue-500/80 leading-none mb-0.5 block">{entry.amount}</span>
+               <span className="text-xl font-light text-blue-500/80 leading-none mb-0.5 block">{formatAmount(toNumber(entry.amount))}</span>
                <span className="text-[7px] font-bold tracking-widest text-white/10 uppercase">ml</span>
              </div>
           </div>
@@ -110,7 +110,7 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
           <div className="flex justify-between items-end">
              <p className="text-lg font-extralight tracking-tight flex-1 pr-4 text-white/80">{entry.activity}</p>
              <div className="text-right">
-               <span className="text-xl font-light text-orange-500/80 leading-none mb-0.5 block">{entry.calories}</span>
+               <span className="text-xl font-light text-orange-500/80 leading-none mb-0.5 block">{formatAmount(toNumber(entry.calories))}</span>
                <span className="text-[7px] font-bold tracking-widest text-white/10 uppercase">Net Burn</span>
              </div>
           </div>

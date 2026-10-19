@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { setHours, startOfToday, subDays } from 'date-fns';
 import { describe, expect, it, vi } from 'vitest';
+import { LogEntryCard } from '@/components/LogEntryCard';
 import { ConsistencyModal } from '@/components/modals/ConsistencyModal';
 import { HistoryTab } from '@/components/tabs/HistoryTab';
 import { HomeTab } from '@/components/tabs/HomeTab';
@@ -23,6 +24,20 @@ describe('totals on screen', () => {
     const { container } = render(<HistoryTab entries={entries} deleteEntry={vi.fn()} onDateJump={vi.fn()} />);
     expect(container.textContent).toContain('590 CALS');
     expect(container.textContent).not.toContain('0260330');
+  });
+
+  it('entry cards round pasted quantities, water and workout calories', () => {
+    const item = { name: 'Rice', quantity: { value: 0.33333, unit: 'cup' }, macros: {} };
+    const cards = [
+      food(0, { items: [item] }),
+      { id: 'w', type: 'water', timestamp: 0, amount: 250.00000000000003 },
+      { id: 'b', type: 'workout', timestamp: 0, activity: 'Run', calories: 120.33333 },
+    ] as LogEntry[];
+    const { container } = render(<>{cards.map(e => <LogEntryCard key={e.id} entry={e} onDelete={vi.fn()} />)}</>);
+    expect(container.textContent).toContain('0.3 cup');
+    expect(container.textContent).toContain('250ml');
+    expect(container.textContent).toContain('120.3Net Burn');
+    expect(container.textContent).not.toMatch(/\d\.\d{2,}/);
   });
 
   it('F-22: the consistency streak counts past 30 days', () => {

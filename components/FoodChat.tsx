@@ -5,6 +5,7 @@ import { Send, Check, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FoodEntry } from '@/hooks/use-daily-log';
 import { extractFoodJson } from '@/lib/food-json';
+import { formatAmount } from '@/lib/totals';
 import { useAuth } from '@/components/AuthProvider';
 
 type Msg = { role: 'user' | 'model'; text: string };
@@ -88,8 +89,8 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
                 <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-[#00FF88]/50">{p.meal}</span>
               </div>
               <span className="text-sm font-light text-white/70 whitespace-nowrap tabular-nums">
-                {Number(p.nutrition.calories) || 0}<small className="text-[8px] opacity-40 ml-0.5">kcal</small>
-                <span className="text-indigo-400/70 ml-2">{Number(p.nutrition.protein) || 0}<small className="text-[8px] opacity-40 ml-0.5">p</small></span>
+                {formatAmount(p.nutrition.calories)}<small className="text-[8px] opacity-40 ml-0.5">kcal</small>
+                <span className="text-indigo-400/70 ml-2">{formatAmount(p.nutrition.protein)}<small className="text-[8px] opacity-40 ml-0.5">p</small></span>
               </span>
             </div>
           ))}

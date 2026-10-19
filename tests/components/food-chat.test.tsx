@@ -32,4 +32,12 @@ describe('FoodChat', () => {
     await userEvent.click(await screen.findByRole('button', { name: /log it/i }));
     expect(onAdd).toHaveBeenCalledWith('Breakfast', '4 idlis', expect.objectContaining({ calories: 260, protein: 8 }));
   });
+
+  it('the Log It card shows a fenced reply with rounded totals', async () => {
+    const meal = { rawInput: 'rice', items: [{ name: 'Rice', macros: { calories: 100.1, protein: 0.2 } }, { name: 'Dal', macros: { calories: 200.2, protein: 0.1 } }] };
+    await ask(reply(200, JSON.stringify({ text: '```json\n' + JSON.stringify(meal) + '\n```' })));
+    await screen.findByRole('button', { name: /log it/i });
+    expect(screen.getByText('300.3')).toBeInTheDocument();
+    expect(screen.getByText('0.3')).toBeInTheDocument();
+  });
 });
