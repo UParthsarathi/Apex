@@ -59,7 +59,7 @@ supabase/     schema and RLS policy
 | `app/api/chat/route.ts` | Server-side proxy to Gemini for the in-app chat. Validates the caller's Supabase JWT before forwarding. |
 | `hooks/use-daily-log.ts` | All entry types, the initial fetch, and every mutation (`addFood`, `addWater`, `addWorkout`, `addTask`, `addSleep`, `toggleTask`, `deleteEntry`). Called once, in `page.tsx`. |
 | `backend/supabase.ts` | Creates and memoises the Supabase client. |
-| `backend/auth.ts` | `signIn`, `signUp`, `signInAnonymously`, `linkEmail`, `updateDisplayName`, `signOut`. |
+| `backend/auth.ts` | `signIn`, `signUp`, `signInAnonymously`, `updateDisplayName`, `signOut`. |
 | `components/AuthProvider.tsx` | Holds the session, subscribes to auth changes, exposes `useAuth()`. |
 | `components/tabs/` | One component per screen: Home, Protocol (logging), Tasks, History, Settings. They receive data and callbacks as props. |
 | `components/QuickAdds.tsx` | Five input forms, plus `parseFoodJson` which both the paste flow and the chat use. |
@@ -183,8 +183,8 @@ Supabase Auth. `AuthProvider` fetches the session on mount and subscribes to
 `onAuthStateChange`; the subscription is cleaned up on unmount. `page.tsx` redirects to
 `/login` when there is no user, and shows a name-entry screen until `display_name` is set.
 
-Anonymous sign in is supported. `linkEmail` attaches an email and password to the existing
-anonymous user via `updateUser`, so the uid and all existing rows are preserved.
+Anonymous sign in is supported. A guest account lives only in that browser's session: signing
+out or clearing site data loses it, and there is no way to add an email to it later.
 
 The fetch effect in `use-daily-log.ts` uses a `cancelled` flag in its cleanup, so a response
 that arrives after the user changed is discarded rather than overwriting the new user's data.
@@ -195,8 +195,7 @@ that arrives after the user changed is discarded rather than overwriting the new
   screen and only disappears on reload. Errors currently go to `console.error` only.
 - The initial fetch has no date range or limit. It loads every entry the user has ever
   created in order to render one day.
-- No password reset flow. An anonymous account that never calls `linkEmail` cannot be
-  recovered.
+- No password reset flow, and a guest account cannot be recovered once its session is gone.
 - No error boundaries, so a render error in one card takes down the whole tab.
 - Several labels are 8px and some grey text falls below WCAG contrast minimums.
 - `/api/chat` has authentication but no rate limiting of its own.

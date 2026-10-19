@@ -5,7 +5,7 @@ import { SettingsTab } from '@/components/tabs/SettingsTab';
 import { FOOD_PROMPT } from '@/lib/food-prompt';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock('@/backend/auth', () => ({ signOut: vi.fn(), updateDisplayName: vi.fn(), linkEmail: vi.fn() }));
+vi.mock('@/backend/auth', () => ({ signOut: vi.fn(), updateDisplayName: vi.fn() }));
 
 async function copyFrom(section: RegExp) {
   const user = userEvent.setup(); // installs a clipboard jsdom lacks
