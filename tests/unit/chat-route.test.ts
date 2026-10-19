@@ -5,6 +5,7 @@ const auth = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock('@/backend/supabase', () => ({ getSupabase: () => ({ auth }) }));
 
 import { POST } from '@/app/api/chat/route';
+import { FOOD_PROMPT } from '@/lib/food-prompt';
 
 const call = (body: unknown, token = 'good') =>
   POST(new Request('http://localhost/api/chat', {
@@ -51,6 +52,8 @@ describe('/api/chat', () => {
     const res = await call(hi);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ text: 'hello' });
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.system_instruction.parts[0].text).toBe(FOOD_PROMPT); // the same prompt Settings hands out
   });
 
   it('F-10: retries a transient 503 and succeeds', async () => {
