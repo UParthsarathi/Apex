@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, X, ArrowUpRight, Dna, Pencil, Sparkles, type LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { User, X, ArrowUpRight, Pencil, Sparkles } from 'lucide-react';
 import { FOOD_PROMPT } from '@/lib/food-prompt';
 import { LogEntry } from '@/hooks/use-daily-log';
 import { signOut, updateDisplayName } from '@/backend/auth';
@@ -33,32 +32,6 @@ export function SettingsTab({ entries, user }: {
     await signOut();
     router.push('/login');
   };
-
-  const JSON_TEMPLATE = `{
-  "rawInput": "Meal description here",
-  "mealType": "Breakfast | Lunch | Snacks | Dinner",
-  "items": [
-    {
-      "name": "Component Name",
-      "quantity": { "value": 1, "unit": "serving" },
-      "macros": { "calories": 100, "protein": 10, "carbs": 10, "fat": 2, "fiber": 1, "sugar": 5, "sodium": 200, "saturatedFat": 1, "cholesterol": 10, "potassium": 150, "calcium": 50, "iron": 1 }
-    }
-  ],
-  "totals": {
-    "calories": 100,
-    "protein": 10,
-    "carbs": 10,
-    "fat": 2,
-    "fiber": 1,
-    "sugar": 5,
-    "sodium": 200,
-    "saturatedFat": 1,
-    "cholesterol": 10,
-    "potassium": 150,
-    "calcium": 50,
-    "iron": 1
-  }
-}`;
 
   return (
     <div className="px-5 py-6 font-sans overflow-visible">
@@ -94,6 +67,11 @@ export function SettingsTab({ entries, user }: {
 
       <div className="space-y-8">
         <div className="space-y-3">
+          <label className="small-caps ml-1 !text-white/20">Log Meals With Your AI</label>
+          <AiPrompt />
+        </div>
+
+        <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Identity Management</label>
           <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">
              <button
@@ -123,7 +101,7 @@ export function SettingsTab({ entries, user }: {
                  a.download = `core_recovery_${format(new Date(), 'yyyyMMdd')}.json`;
                  a.click();
                }}
-               className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group border-b border-white/5"
+               className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group"
              >
                 <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
                   <span className="text-[10px] font-bold uppercase tracking-widest">Export Data</span>
@@ -133,15 +111,6 @@ export function SettingsTab({ entries, user }: {
                   <ArrowUpRight size={14} />
                 </div>
              </button>
-
-             <CopySection icon={Dna} title="JSON Protocol Format" hint="Toggle format specifications" text={JSON_TEMPLATE} />
-             <CopySection
-               icon={Sparkles}
-               title="AI Prompt"
-               hint="Log meals with your own AI"
-               note="Paste this into a ChatGPT Project, a Claude Project or a Gemini Gem. Tell it what you ate, then paste the JSON it gives back into the food box."
-               text={FOOD_PROMPT}
-             />
           </div>
         </div>
       </div>
@@ -149,52 +118,51 @@ export function SettingsTab({ entries, user }: {
   );
 }
 
-// A fold-out with copyable text: the JSON format and the AI prompt.
-function CopySection({ icon: Icon, title, hint, note, text }: { icon: LucideIcon, title: string, hint: string, note?: string, text: string }) {
+// The prompt people paste into their own ChatGPT, Claude or Gemini. It carries the JSON example the food box reads.
+function AiPrompt() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const copy = () =>
+    navigator.clipboard.writeText(FOOD_PROMPT).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => setOpen(true), // clipboard blocked: show the text so it can be selected by hand
+    );
+
   return (
-    <div className="border-b border-white/5">
+    <div className="bg-[#0a0a0a] border border-[#00FF88]/10 rounded-2xl p-4 space-y-4">
+      <div className="flex items-start gap-3">
+        <Sparkles size={16} className="text-[#00FF88]/60 mt-0.5 shrink-0" />
+        <p className="text-[10px] font-light text-white/50 leading-relaxed">
+          Paste this prompt into a ChatGPT Project, a Claude Project or a Gemini Gem. Tell it what you ate, tap Copy on its reply, and paste that into the food box.
+        </p>
+      </div>
+      <button
+        onClick={copy}
+        className="w-full bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-3.5 rounded-xl hover:bg-[#00FF88]/90 transition-all active:scale-[0.98]"
+      >
+        {copied ? 'Copied' : 'Copy Prompt'}
+      </button>
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="w-full p-4 flex justify-between items-center hover:bg-sky-500/10 transition-all group active:bg-sky-500/20 cursor-pointer"
+        className="w-full text-[8px] font-bold uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition-colors"
       >
-         <div className="flex flex-col items-start translate-x-0 group-active:translate-x-1 transition-transform">
-           <span className="text-[10px] font-bold uppercase tracking-widest text-sky-400">{title}</span>
-           <span className="text-[8px] text-white/20 uppercase tracking-tighter mt-0.5">{hint}</span>
-         </div>
-         <div className="w-8 h-8 rounded-full bg-sky-400/5 flex items-center justify-center text-sky-400/40">
-           <Icon size={14} className={cn("transition-transform duration-300", open && "rotate-180")} />
-         </div>
+        {open ? 'Hide prompt' : 'Show prompt'}
       </button>
-
       <AnimatePresence>
         {open && (
-          <motion.div
+          <motion.pre
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden bg-black/60 px-4 pb-4"
+            className="overflow-hidden text-[9px] font-mono text-white/30 leading-snug whitespace-pre-wrap break-words"
           >
-            {note && <p className="text-[10px] font-light text-white/50 leading-relaxed mb-3">{note}</p>}
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10 relative group">
-               <button
-                 onClick={() => {
-                   navigator.clipboard.writeText(text);
-                   setCopied(true);
-                   setTimeout(() => setCopied(false), 2000);
-                 }}
-                 className="absolute right-3 top-3 text-[7px] font-bold text-white/40 hover:text-sky-400 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md transition-colors"
-               >
-                 {copied ? 'Copied' : 'Copy'}
-               </button>
-               <pre className="text-[9px] font-mono text-white/30 leading-snug whitespace-pre-wrap break-words pt-5 max-h-80 overflow-y-auto no-scrollbar">
-                 {text}
-               </pre>
-            </div>
-          </motion.div>
+            {FOOD_PROMPT}
+          </motion.pre>
         )}
       </AnimatePresence>
     </div>
