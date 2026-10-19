@@ -111,6 +111,7 @@ export default function App() {
       <div className="fixed top-6 left-5 z-[60]">
         <button
           onClick={() => setActiveTab('settings')}
+          aria-label="Profile and settings"
           className={cn(
             "w-10 h-10 rounded-full border transition-all active:scale-95 flex items-center justify-center backdrop-blur-xl shadow-2xl shadow-black",
             activeTab === 'settings'
@@ -128,12 +129,14 @@ export default function App() {
         <div className="fixed top-6 right-5 z-[60] flex items-center gap-3">
           <button
             onClick={() => setShowPerformance(true)}
+            aria-label="Performance chart"
             className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-[#00FF88] hover:bg-[#111] hover:border-[#00FF88]/20 transition-all active:scale-95 shadow-2xl shadow-black"
           >
             <BarChart2 size={18} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => setShowConsistency(true)}
+            aria-label="Consistency calendar"
             className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-sky-400 hover:bg-[#111] hover:border-sky-400/20 transition-all active:scale-95 shadow-2xl shadow-black"
           >
             <Calendar size={18} strokeWidth={1.5} />

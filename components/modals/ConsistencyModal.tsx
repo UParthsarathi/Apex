@@ -79,6 +79,7 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close"
                 className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-95"
               >
                 <X size={14} />
@@ -130,6 +131,7 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setViewMonth(subMonths(viewMonth, 1))}
+                    aria-label="Previous month"
                     className="p-1 text-white/30 hover:text-violet-400 transition-colors active:scale-90"
                   >
                     <ChevronLeft size={14} />
@@ -137,6 +139,7 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
                   <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.3em] min-w-[76px] text-center">{format(viewMonth, 'MMM yyyy')}</span>
                   <button
                     onClick={() => setViewMonth(addMonths(viewMonth, 1))}
+                    aria-label="Next month"
                     className="p-1 text-white/30 hover:text-violet-400 transition-colors active:scale-90"
                   >
                     <ChevronRight size={14} />

@@ -123,6 +123,7 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
         <button
           onClick={send}
           disabled={!input.trim() || loading}
+          aria-label="Send"
           className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center disabled:opacity-5 transition-all hover:scale-105 active:scale-95 shrink-0"
         >
           <Send size={16} strokeWidth={2} />

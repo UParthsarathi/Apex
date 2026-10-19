@@ -5,7 +5,6 @@
   background-color: #000000;
   color: #ffffff;
   color-scheme: dark;
-  --font-sans: 'Inter', var(--font-sans), sans-serif;
   --accent: #00FF88;
 }
 

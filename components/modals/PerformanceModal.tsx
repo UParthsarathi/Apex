@@ -130,6 +130,7 @@ export function PerformanceModal({ isOpen, onClose, entries, selectedDate }: { i
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close"
                 className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-colors"
               >
                 <X size={16} />

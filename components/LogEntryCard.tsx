@@ -35,7 +35,7 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
                'Goal'}
             </span>
          </div>
-         <button onClick={onDelete} className="text-white/20 hover:text-red-500 transition-all duration-300 transform active:scale-110">
+         <button onClick={onDelete} aria-label="Delete entry" className="text-white/20 hover:text-red-500 transition-all duration-300 transform active:scale-110">
            <Trash2 size={12} />
          </button>
       </div>

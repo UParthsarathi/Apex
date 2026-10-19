@@ -65,6 +65,7 @@ export function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleT
               <div className="flex items-center gap-4 flex-1">
                 <button
                   onClick={() => toggleTask(task.id)}
+                  aria-label={task.completed ? 'Mark as not done' : 'Mark as done'}
                   className={cn(
                     "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-500",
                     task.completed
@@ -80,6 +81,7 @@ export function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleT
               </div>
               <button
                 onClick={() => deleteEntry(task.id)}
+                aria-label="Delete goal"
                 className="p-2 text-white/5 hover:text-red-500 transition-colors"
               >
                 <Trash2 size={16} strokeWidth={1} />

@@ -239,6 +239,7 @@ export function WorkoutQuickAdd({ onAdd }: { onAdd: (activity: string, cal: numb
       <button
         onClick={handleSave}
         disabled={!activity.trim() || !calories}
+        aria-label="Add activity"
         className="w-10 h-10 rounded-full bg-orange-400/5 text-orange-400 border border-orange-400/10 flex items-center justify-center disabled:opacity-5 transition-all hover:bg-orange-400 hover:text-black"
       >
         <Plus size={18} strokeWidth={1.5} />
@@ -341,6 +342,7 @@ export function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: nu
               key={q}
               type="button"
               onClick={() => setQuality(q)}
+              aria-label={`Sleep quality ${q} of 10`}
               className={cn(
                 "w-2.5 h-2.5 rounded-full transition-all duration-300",
                 quality >= q ? "bg-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.5)]" : "bg-white/5 hover:bg-white/10"
@@ -388,6 +390,7 @@ export function TaskQuickAdd({ onAdd, className }: { onAdd: (desc: string) => vo
       <button
         onClick={handleSave}
         disabled={!desc.trim()}
+        aria-label="Add goal"
         className="w-8 h-8 rounded-xl bg-white/5 text-white/20 hover:bg-white hover:text-black flex items-center justify-center disabled:opacity-5 transition-all"
       >
         <Plus size={16} strokeWidth={1.5} />

@@ -10,9 +10,7 @@ const inter = Inter({
 export const viewport: Viewport = {
   themeColor: '#000000',
   width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  initialScale: 1, // pinch-zoom stays allowed: much of the UI text is 7-10px
 };
 
 export const metadata: Metadata = {

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn, signUp, signInAnonymously } from '@/backend/auth';
+import { useAuth } from '@/components/AuthProvider';
 import { motion } from 'motion/react';
 import { Lock, User } from 'lucide-react';
 
@@ -13,8 +14,30 @@ export default function LoginPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
 
-  const handleSignIn = async () => {
+  // Already signed in (e.g. pressed Back after logging in): go to the app. Otherwise "Continue as
+  // Guest" would silently swap the account for a brand-new, empty guest.
+  useEffect(() => {
+    if (!loading && user) router.replace('/');
+  }, [user, loading, router]);
+
+  // One request at a time: a double tap on "Continue as Guest" used to create two guest accounts.
+  const run = async (action: () => Promise<void>) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    try {
+      await action();
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  };
+
+  const handleSignIn = () => run(async () => {
     if (!email || !password) {
       setError("Email and password are required.");
       return;
@@ -24,9 +47,9 @@ export default function LoginPage() {
     const { error } = await signIn(email, password);
     if (error) setError(error.message);
     else router.push('/');
-  };
+  });
 
-  const handleSignUp = async () => {
+  const handleSignUp = () => run(async () => {
     if (!email || !password) {
       setError("Email and password are required.");
       return;
@@ -43,15 +66,15 @@ export default function LoginPage() {
     } else {
       router.push('/');
     }
-  };
+  });
 
-  const handleAnonymousSignIn = async () => {
+  const handleAnonymousSignIn = () => run(async () => {
     setError(null);
     setSuccess(null);
     const { error } = await signInAnonymously();
     if (error) setError(error.message);
     else router.push('/');
-  };
+  });
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-black text-white p-6">
@@ -80,7 +103,8 @@ export default function LoginPage() {
         {/* PRIMARY: Guest */}
         <button
           onClick={handleAnonymousSignIn}
-          className="w-full bg-[#00FF88] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 shadow-[0_0_15px_rgba(0,255,136,0.15)] hover:shadow-[0_0_25px_rgba(0,255,136,0.3)] transition-all active:scale-[0.98]"
+          disabled={busy}
+          className="w-full bg-[#00FF88] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 shadow-[0_0_15px_rgba(0,255,136,0.15)] hover:shadow-[0_0_25px_rgba(0,255,136,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
         >
           Continue as Guest
         </button>
@@ -126,7 +150,8 @@ export default function LoginPage() {
         <div className="flex flex-col gap-3">
           <button
             onClick={mode === 'signin' ? handleSignIn : handleSignUp}
-            className="w-full bg-white/5 border border-white/10 text-white/80 text-xs font-bold uppercase tracking-[0.1em] py-4 rounded-2xl hover:bg-white/10 hover:text-white transition-all active:scale-[0.98]"
+            disabled={busy}
+            className="w-full bg-white/5 border border-white/10 text-white/80 text-xs font-bold uppercase tracking-[0.1em] py-4 rounded-2xl hover:bg-white/10 hover:text-white transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {mode === 'signin' ? 'Sign In with Email' : 'Create Account'}
           </button>
