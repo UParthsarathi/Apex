@@ -39,24 +39,24 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className="text-white">
       <AreaChart data={data} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
         <defs>
-          <linearGradient id="colorIntake" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#00FF88" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#00FF88" stopOpacity={0}/>
+          <linearGradient id="colorIntake" x1="0" y1="0" x2="0" y2="1" className="text-accent">
+            <stop offset="5%" stopColor="currentColor" stopOpacity={0.3}/>
+            <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
           </linearGradient>
-          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#FB923C" stopOpacity={0.2}/>
-            <stop offset="95%" stopColor="#FB923C" stopOpacity={0}/>
+          <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1" className="text-orange-400">
+            <stop offset="5%" stopColor="currentColor" stopOpacity={0.2}/>
+            <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.02} vertical={false} />
         <XAxis
           dataKey="name"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 9, fill: '#ffffff20' }}
+          tick={{ fontSize: 9, fill: 'currentColor', fillOpacity: 0.125 }}
           dy={10}
         />
         <YAxis hide />
@@ -64,11 +64,11 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="bg-[#111] border border-white/10 p-3 rounded-2xl shadow-2xl">
+                <div className="bg-raised border border-white/10 p-3 rounded-2xl shadow-2xl">
                   <p className="text-[10px] font-bold text-white/40 uppercase mb-2">Summary</p>
                   <div className="space-y-1">
                     <div className="flex justify-between gap-4">
-                      <span className="text-[9px] text-[#00FF88] uppercase">Nutrition</span>
+                      <span className="text-[9px] text-accent uppercase">Nutrition</span>
                       <span className="text-[10px] font-mono text-white">{formatAmount(toNumber(payload[0].value))} kcal</span>
                     </div>
                     <div className="flex justify-between gap-4">
@@ -85,7 +85,8 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
         <Area
           type="monotone"
           dataKey="intake"
-          stroke="#00FF88"
+          stroke="currentColor"
+          className="text-accent"
           fillOpacity={1}
           fill="url(#colorIntake)"
           strokeWidth={2}
@@ -94,7 +95,8 @@ function PerformanceGraph({ entries, selectedDate }: { entries: LogEntry[], sele
         <Area
           type="monotone"
           dataKey="activity"
-          stroke="#FB923C"
+          stroke="currentColor"
+          className="text-orange-400"
           fillOpacity={1}
           fill="url(#colorActivity)"
           strokeWidth={2}
@@ -121,11 +123,11 @@ export function PerformanceModal({ isOpen, onClose, entries, selectedDate }: { i
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
+            className="w-full max-w-lg bg-surface border border-white/10 rounded-[32px] p-6 shadow-2xl relative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-8">
               <div className="space-y-0.5">
-                <span className="small-caps !text-[#00FF88] text-[8px] !tracking-[0.3em]">Insights</span>
+                <span className="small-caps !text-accent text-[8px] !tracking-[0.3em]">Insights</span>
                 <h2 className="text-xl font-light tracking-tight uppercase">Performance</h2>
               </div>
               <button
@@ -139,7 +141,7 @@ export function PerformanceModal({ isOpen, onClose, entries, selectedDate }: { i
 
             <div className="flex gap-6 mb-6">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#00FF88] shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
+                <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
                 <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Intake</span>
               </div>
               <div className="flex items-center gap-2">

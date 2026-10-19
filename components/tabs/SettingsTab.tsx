@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, X, ArrowUpRight, Pencil, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { FOOD_PROMPT } from '@/lib/food-prompt';
+import { THEME_PREFS, readThemePref, saveThemePref, type ThemePref } from '@/lib/theme';
 import { LogEntry } from '@/hooks/use-daily-log';
 import { signOut, updateDisplayName } from '@/backend/auth';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -49,7 +51,7 @@ export function SettingsTab({ entries, user }: {
             onChange={(e) => setNameDraft(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && saveName()}
             onBlur={saveName}
-            className="block mx-auto mt-1 bg-white/[0.03] border border-[#00FF88]/40 rounded-xl px-4 py-2 text-2xl font-extralight tracking-tight text-center outline-none max-w-xs w-full"
+            className="block mx-auto mt-1 bg-white/[0.03] border border-accent/40 rounded-xl px-4 py-2 text-2xl font-extralight tracking-tight text-center outline-none max-w-xs w-full"
           />
         ) : (
           <button
@@ -57,7 +59,7 @@ export function SettingsTab({ entries, user }: {
             className="group flex items-center justify-center gap-2 mx-auto mt-1"
           >
             <h2 className="text-2xl font-extralight tracking-tight truncate max-w-xs px-2">{displayName}</h2>
-            <Pencil size={12} className="text-white/20 group-hover:text-[#00FF88] transition-colors shrink-0" />
+            <Pencil size={12} className="text-white/20 group-hover:text-accent transition-colors shrink-0" />
           </button>
         )}
         <p className="text-[9px] text-white/20 uppercase tracking-widest mt-1">
@@ -72,8 +74,13 @@ export function SettingsTab({ entries, user }: {
         </div>
 
         <div className="space-y-3">
+          <label className="small-caps ml-1 !text-white/20">Appearance</label>
+          <ThemePicker />
+        </div>
+
+        <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Identity Management</label>
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">
+          <div className="bg-surface border border-white/5 rounded-2xl overflow-hidden">
              <button
                onClick={handleSignOut}
                className="w-full p-4 flex justify-between items-center hover:bg-white/[0.02] transition-all group"
@@ -91,7 +98,7 @@ export function SettingsTab({ entries, user }: {
 
         <div className="space-y-3">
           <label className="small-caps ml-1 !text-white/20">Data Persistence</label>
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden">
+          <div className="bg-surface border border-white/5 rounded-2xl overflow-hidden">
              <button
                onClick={() => {
                  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
@@ -133,16 +140,16 @@ function AiPrompt() {
     );
 
   return (
-    <div className="bg-[#0a0a0a] border border-[#00FF88]/10 rounded-2xl p-4 space-y-4">
+    <div className="bg-surface border border-accent/10 rounded-2xl p-4 space-y-4">
       <div className="flex items-start gap-3">
-        <Sparkles size={16} className="text-[#00FF88]/60 mt-0.5 shrink-0" />
+        <Sparkles size={16} className="text-accent/60 mt-0.5 shrink-0" />
         <p className="text-[10px] font-light text-white/50 leading-relaxed">
           Paste this prompt into a ChatGPT Project, a Claude Project or a Gemini Gem. Tell it what you ate, tap Copy on its reply, and paste that into the food box.
         </p>
       </div>
       <button
         onClick={copy}
-        className="w-full bg-[#00FF88] text-black text-[10px] font-bold uppercase tracking-[0.2em] py-3.5 rounded-xl hover:bg-[#00FF88]/90 transition-all active:scale-[0.98]"
+        className="w-full bg-accent text-black text-[10px] font-bold uppercase tracking-[0.2em] py-3.5 rounded-xl hover:bg-accent/90 transition-all active:scale-[0.98]"
       >
         {copied ? 'Copied' : 'Copy Prompt'}
       </button>
@@ -165,6 +172,30 @@ function AiPrompt() {
           </motion.pre>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Auto follows the phone's light/dark setting; the choice is stored on this device only.
+function ThemePicker() {
+  const [theme, setTheme] = useState<ThemePref>(readThemePref);
+
+  return (
+    <div role="radiogroup" aria-label="Theme" className="bg-surface border border-white/5 rounded-2xl p-1 grid grid-cols-3 gap-1">
+      {THEME_PREFS.map(pref => (
+        <button
+          key={pref}
+          role="radio"
+          aria-checked={theme === pref}
+          onClick={() => { saveThemePref(pref); setTheme(pref); }}
+          className={cn(
+            "py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all active:scale-[0.98]",
+            theme === pref ? "bg-white text-black" : "text-white/40 hover:text-white/70"
+          )}
+        >
+          {pref}
+        </button>
+      ))}
     </div>
   );
 }

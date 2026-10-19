@@ -86,11 +86,11 @@ export default function LoginPage() {
         <div className="flex justify-center">
           <div className="relative w-16 h-16 flex items-center justify-center">
             {/* Outer Glow */}
-            <div className="absolute inset-0 bg-[#00FF88]/20 blur-xl rounded-full" />
+            <div className="absolute inset-0 bg-accent/20 blur-xl rounded-full" />
             {/* Geometric A / Mountain Form */}
             <svg viewBox="0 0 100 100" className="w-12 h-12 relative z-10 drop-shadow-[0_0_10px_rgba(0,255,136,0.8)]">
-              <path d="M50 15 L90 85 L75 85 L50 40 L25 85 L10 85 Z" fill="#00FF88" />
-              <path d="M35 65 L65 65 L60 75 L40 75 Z" fill="#00FF88" />
+              <path d="M50 15 L90 85 L75 85 L50 40 L25 85 L10 85 Z" className="fill-accent" />
+              <path d="M35 65 L65 65 L60 75 L40 75 Z" className="fill-accent" />
             </svg>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function LoginPage() {
         <button
           onClick={handleAnonymousSignIn}
           disabled={busy}
-          className="w-full bg-[#00FF88] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 shadow-[0_0_15px_rgba(0,255,136,0.15)] hover:shadow-[0_0_25px_rgba(0,255,136,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
+          className="w-full bg-accent text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-accent/90 shadow-[0_0_15px_rgba(0,255,136,0.15)] hover:shadow-[0_0_25px_rgba(0,255,136,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
         >
           Continue as Guest
         </button>
@@ -125,7 +125,7 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-accent/40 outline-none transition-all"
             />
           </div>
           <div className="relative">
@@ -135,7 +135,7 @@ export default function LoginPage() {
               placeholder={mode === 'signin' ? "App Password" : "Create App Password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+              className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-accent/40 outline-none transition-all"
             />
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function LoginPage() {
           <p className="text-[10px] text-red-500 uppercase tracking-widest text-center">{error}</p>
         )}
         {success && (
-          <p className="text-[10px] text-[#00FF88] uppercase tracking-[0.1em] text-center">{success}</p>
+          <p className="text-[10px] text-accent uppercase tracking-[0.1em] text-center">{success}</p>
         )}
 
         <div className="flex flex-col gap-3">

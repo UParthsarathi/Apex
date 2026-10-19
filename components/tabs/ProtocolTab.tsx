@@ -21,7 +21,7 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
   const [foodMode, setFoodMode] = useState<'manual' | 'ai'>('manual');
 
   const modules = [
-    { id: 'intake', label: 'Nutrition', icon: <Utensils size={14} />, color: 'text-[#00FF88]' },
+    { id: 'intake', label: 'Nutrition', icon: <Utensils size={14} />, color: 'text-accent' },
     { id: 'water', label: 'Hydration', icon: <Droplets size={14} />, color: 'text-blue-500' },
     { id: 'activity', label: 'Activity', icon: <Flame size={14} />, color: 'text-orange-500' },
     { id: 'sleep', label: 'Sleep', icon: <Zap size={14} />, color: 'text-violet-400' },
@@ -31,14 +31,14 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
     <div className="px-5 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       <header className="space-y-4">
         <div>
-          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Quick Entry</span>
+          <span className="small-caps text-accent !tracking-[0.3em]">Quick Entry</span>
           <h1 className="display-light">Journal</h1>
         </div>
         <DateNavigator selectedDate={selectedDate} onDateChange={onDateChange} />
       </header>
 
       {/* Module Selector - Segmented Control */}
-      <div className="p-1.5 bg-[#111] border border-white/5 rounded-[24px] flex gap-1 shadow-2xl shadow-black/50 overflow-x-auto no-scrollbar">
+      <div className="p-1.5 bg-raised border border-white/5 rounded-[24px] flex gap-1 shadow-2xl shadow-black/50 overflow-x-auto no-scrollbar">
         {modules.map(mod => (
           <button
             key={mod.id}
@@ -77,7 +77,7 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
               <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <Utensils size={12} className="text-[#00FF88]" />
+                    <Utensils size={12} className="text-accent" />
                     <span className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">Add Meal</span>
                   </div>
                   <div className="flex bg-white/5 p-0.5 rounded-full">
@@ -87,7 +87,7 @@ export function ProtocolTab({ selectedDate, onDateChange, addFood, addWater, add
                         onClick={() => setFoodMode(mode)}
                         className={cn(
                           "px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-[0.15em] transition-all",
-                          foodMode === mode ? "bg-[#00FF88] text-black" : "text-white/25 hover:text-white/50"
+                          foodMode === mode ? "bg-accent text-black" : "text-white/25 hover:text-white/50"
                         )}
                       >
                         {mode === 'ai' ? 'AI Chat' : 'Manual'}

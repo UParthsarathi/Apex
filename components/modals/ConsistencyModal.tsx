@@ -67,7 +67,7 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-sm bg-[#0c0c0c] border border-white/10 rounded-[32px] p-7 shadow-3xl relative overflow-hidden"
+            className="w-full max-w-sm bg-surface border border-white/10 rounded-[32px] p-7 shadow-3xl relative overflow-hidden"
           >
             {/* Background Accent */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-violet-500/5 blur-[100px] rounded-full" />
@@ -187,7 +187,7 @@ export function ConsistencyModal({ isOpen, onClose, entries }: { isOpen: boolean
 
             <div className="flex items-center justify-between py-4 border-t border-white/5 relative z-10">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88] animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                 <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.3em]">Neuro-Sync Active</span>
               </div>
               <p className="text-[7px] font-mono text-white/10 italic">

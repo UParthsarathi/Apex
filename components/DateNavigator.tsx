@@ -20,7 +20,7 @@ export function DateNavigator({ selectedDate, onDateChange }: { selectedDate: Da
             onClick={() => onDateChange(day)}
             className={cn(
               "flex-1 py-2 flex flex-col items-center rounded-xl transition-all duration-300",
-              active ? "bg-[#00FF88] text-black shadow-[0_0_15px_rgba(0,255,136,0.3)]" : "text-white/20 hover:text-white/40"
+              active ? "bg-accent text-black shadow-[0_0_15px_rgba(0,255,136,0.3)]" : "text-white/20 hover:text-white/40"
             )}
           >
             <span className={cn("text-[7px] font-bold uppercase tracking-widest mb-0.5", active ? "text-black/60" : "text-white/10")}>

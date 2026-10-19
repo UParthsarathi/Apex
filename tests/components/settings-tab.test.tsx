@@ -21,6 +21,17 @@ describe('Settings: log meals with your AI', () => {
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
+  it('Appearance starts on Dark and switches the whole app to Light and back', async () => {
+    localStorage.clear();
+    const user = setup();
+    expect(screen.getByRole('radio', { name: 'dark' })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('radio', { name: 'light' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(screen.getByRole('radio', { name: 'light' })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('radio', { name: 'dark' }));
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+  });
+
   it('Show prompt reveals the full text; the separate JSON template is gone', async () => {
     const user = setup();
     await user.click(screen.getByRole('button', { name: 'Show prompt' }));

@@ -49,7 +49,7 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
 
   return (
     <div className={cn(
-      "bg-[#0a0a0a] rounded-2xl border border-white/5 p-2 space-y-1.5 focus-within:border-white/10 transition-all duration-500",
+      "bg-surface rounded-2xl border border-white/5 p-2 space-y-1.5 focus-within:border-white/10 transition-all duration-500",
       isJson && "border-sky-500/30 bg-sky-500/[0.02]"
     )}>
       <div className="relative">
@@ -123,7 +123,7 @@ export function FoodQuickAdd({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc:
                 onClick={() => setMeal(m)}
                 className={cn(
                   "px-3 py-2 rounded-full text-[8px] font-bold tracking-[0.05em] uppercase transition-all duration-300 whitespace-nowrap",
-                  meal === m ? "bg-[#00FF88] text-black" : "text-white/20 hover:text-white/40"
+                  meal === m ? "bg-accent text-black" : "text-white/20 hover:text-white/40"
                 )}
               >
                 {m}
@@ -157,7 +157,7 @@ export function WaterQuickAdd({ onAdd }: { onAdd: (amount: number) => void }) {
   };
 
   return (
-    <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 p-6 space-y-6 transition-all duration-500 focus-within:border-white/10 shadow-3xl shadow-black">
+    <div className="bg-surface rounded-2xl border border-white/5 p-6 space-y-6 transition-all duration-500 focus-within:border-white/10 shadow-3xl shadow-black">
       <div className="space-y-4">
         <div className="flex justify-between items-baseline px-1">
           <span className="text-[7px] font-bold text-white/20 uppercase tracking-[0.4em]">Volume</span>
@@ -194,8 +194,8 @@ export function WaterQuickAdd({ onAdd }: { onAdd: (amount: number) => void }) {
         className={cn(
           "w-full py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 active:scale-95 shadow-xl",
           isSaved
-            ? "bg-[#00FF88] text-black shadow-[#00FF88]/20"
-            : "bg-blue-500 text-white hover:bg-white hover:text-black shadow-blue-500/20"
+            ? "bg-accent text-black shadow-accent/20"
+            : "bg-blue-500 text-on-fill hover:bg-white hover:text-black shadow-blue-500/20"
         )}
       >
         {isSaved ? 'Hydration Authenticated' : 'Log Intake'}
@@ -216,7 +216,7 @@ export function WorkoutQuickAdd({ onAdd }: { onAdd: (activity: string, cal: numb
   };
 
   return (
-    <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 px-4 py-3.5 flex items-center gap-4 transition-all duration-500 focus-within:border-white/10">
+    <div className="bg-surface rounded-2xl border border-white/5 px-4 py-3.5 flex items-center gap-4 transition-all duration-500 focus-within:border-white/10">
       <div className="flex-1 space-y-0.5">
         <input
           type="text"
@@ -268,7 +268,7 @@ export function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: nu
   };
 
   return (
-    <div className="bg-[#080808] rounded-[32px] border border-white/5 p-6 space-y-8 transition-all duration-500 shadow-3xl shadow-black focus-within:border-violet-500/20">
+    <div className="bg-surface rounded-[32px] border border-white/5 p-6 space-y-8 transition-all duration-500 shadow-3xl shadow-black focus-within:border-violet-500/20">
 
       {/* Category Toggle */}
       <div className="flex bg-white/5 p-1 rounded-2xl">
@@ -279,7 +279,7 @@ export function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: nu
           }}
           className={cn(
             "flex-1 py-2 text-[8px] font-bold uppercase tracking-widest rounded-xl transition-all",
-            category === 'Sleep' ? "bg-indigo-600 text-white shadow-lg" : "text-white/20 hover:text-white/40"
+            category === 'Sleep' ? "bg-indigo-600 text-on-fill shadow-lg" : "text-white/20 hover:text-white/40"
           )}
         >
           Night Sleep
@@ -357,8 +357,8 @@ export function SleepQuickAdd({ onAdd }: { onAdd: (duration: number, quality: nu
           className={cn(
             "px-10 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 active:scale-95 shadow-xl",
             isSaved
-              ? "bg-[#00FF88] text-black shadow-[#00FF88]/20"
-              : "bg-violet-500 text-white hover:bg-white hover:text-black shadow-violet-500/20"
+              ? "bg-accent text-black shadow-accent/20"
+              : "bg-violet-500 text-on-fill hover:bg-white hover:text-black shadow-violet-500/20"
           )}
         >
           {isSaved ? 'Saved' : 'Save Entry'}
@@ -378,7 +378,7 @@ export function TaskQuickAdd({ onAdd, className }: { onAdd: (desc: string) => vo
   };
 
   return (
-    <div className={cn("bg-[#0a0a0a] rounded-2xl p-1.5 border border-white/5 flex items-center gap-2 transition-all duration-500 focus-within:border-white/10", className)}>
+    <div className={cn("bg-surface rounded-2xl p-1.5 border border-white/5 flex items-center gap-2 transition-all duration-500 focus-within:border-white/10", className)}>
       <input
         type="text"
         placeholder="New Objective"

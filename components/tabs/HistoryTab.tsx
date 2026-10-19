@@ -46,7 +46,7 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
     <div className="px-5 flex flex-col min-h-full transition-all duration-500">
       <header className="mb-6 flex justify-between items-end">
         <div>
-          <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Timeline</span>
+          <span className="small-caps text-accent !tracking-[0.3em]">Timeline</span>
           <h1 className="display-light text-3xl">History</h1>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -83,7 +83,7 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
               onClick={() => setFocusedDate(date)}
               className="flex-shrink-0 group flex flex-col items-center gap-1"
             >
-              <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5 group-hover:border-[#00FF88]/50 flex items-center justify-center text-[10px] font-mono transition-all">
+              <div className="w-8 h-8 rounded-full bg-white/5 border border-white/5 group-hover:border-accent/50 flex items-center justify-center text-[10px] font-mono transition-all">
                 {format(parseDayKey(date), 'd')}
               </div>
               <span className="text-[6px] font-bold text-white/20 uppercase tracking-[0.1em]">{format(parseDayKey(date), 'EEE')}</span>
@@ -131,8 +131,8 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
               <div key={date} className="space-y-6">
                 <div className="flex justify-between items-end border-b border-white/[0.05] pb-2.5 px-0.5">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#00FF88]/50 shadow-[0_0_8px_rgba(0,255,136,0.3)]" />
-            <h3 className="small-caps !text-[#00FF88]/80 text-[10px] !tracking-[0.2em]">{dateLabel}</h3>
+            <div className="w-1.5 h-1.5 rounded-full bg-accent/50 shadow-[0_0_8px_rgba(0,255,136,0.3)]" />
+            <h3 className="small-caps !text-accent/80 text-[10px] !tracking-[0.2em]">{dateLabel}</h3>
           </div>
           <div className="flex gap-4 text-[8px] font-mono tracking-tighter uppercase tabular-nums items-center">
             <span className="text-white/40"><span className="text-white/80 font-bold">{formatAmount(stats.calories)}</span> CALS</span>
@@ -145,7 +145,7 @@ export function HistoryTab({ entries, deleteEntry, onDateJump }: {
             )}
             <button
               onClick={() => onDateJump(day)}
-              className="text-[#00FF88]/40 hover:text-[#00FF88] flex items-center gap-1 transition-colors ml-2"
+              className="text-accent/40 hover:text-accent flex items-center gap-1 transition-colors ml-2"
             >
               <Activity size={10} />
               <span className="text-[7px] font-bold uppercase">View Day</span>

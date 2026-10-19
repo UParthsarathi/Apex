@@ -14,7 +14,7 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
     <motion.div
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[#0a0a0a] border border-white/[0.04] rounded-2xl p-4 relative group hover:border-white/10 transition-all duration-500"
+      className="bg-surface border border-white/[0.04] rounded-2xl p-4 relative group hover:border-white/10 transition-all duration-500"
     >
       <div className="flex justify-between items-start mb-2">
          <div className="flex items-center gap-2">
@@ -22,11 +22,11 @@ export function LogEntryCard({ entry, onDelete }: { entry: LogEntry, onDelete: (
             <div className="w-[1px] h-1.5 bg-white/5" />
             <span className={cn(
               "text-[8px] font-bold tracking-[0.2em] uppercase",
-              entry.type === 'food' ? "text-[#00FF88]/40" :
+              entry.type === 'food' ? "text-accent/40" :
               entry.type === 'workout' ? "text-orange-500/40" :
               entry.type === 'water' ? "text-blue-500/40" :
               entry.type === 'sleep' ? "text-violet-400/40" :
-              "text-[#00FF88]/40"
+              "text-accent/40"
             )}>
               {entry.type === 'food' ? entry.meal :
                entry.type === 'workout' ? 'Workout' :

@@ -29,7 +29,7 @@ export function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleT
       <header className="mb-6 space-y-4">
         <div className="flex justify-between items-end">
           <div>
-            <span className="small-caps text-[#00FF88] !tracking-[0.3em]">Your Roadmap</span>
+            <span className="small-caps text-accent !tracking-[0.3em]">Your Roadmap</span>
             <h1 className="display-light">Goals</h1>
           </div>
           <div className="pb-1 text-right flex flex-col items-end gap-1.5">
@@ -69,7 +69,7 @@ export function TasksTab({ entries, selectedDate, onDateChange, addTask, toggleT
                   className={cn(
                     "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-500",
                     task.completed
-                      ? "bg-[#00FF88] border-[#00FF88] text-black"
+                      ? "bg-accent border-accent text-black"
                       : "border-white/10 text-transparent"
                   )}
                 >

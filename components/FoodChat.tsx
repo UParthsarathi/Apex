@@ -58,7 +58,7 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
   };
 
   return (
-    <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 p-3 space-y-3 focus-within:border-white/10 transition-all duration-500">
+    <div className="bg-surface rounded-2xl border border-white/5 p-3 space-y-3 focus-within:border-white/10 transition-all duration-500">
       {messages.length > 0 && (
         <div ref={scrollRef} className="max-h-64 overflow-y-auto no-scrollbar space-y-2 px-1 pt-1">
           {messages.map((m, i) => {
@@ -69,7 +69,7 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
               <div key={i} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                 <div className={cn(
                   'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm font-extralight leading-relaxed',
-                  m.role === 'user' ? 'bg-[#00FF88]/10 text-[#d9ffe9]' : 'bg-white/5 text-white/80'
+                  m.role === 'user' ? 'bg-accent/10 text-accent-soft' : 'bg-white/5 text-white/80'
                 )}>
                   {m.text}
                 </div>
@@ -81,12 +81,12 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
       )}
 
       {pending && (
-        <div className="rounded-2xl border border-[#00FF88]/20 bg-[#00FF88]/[0.04] p-4 space-y-3">
+        <div className="rounded-2xl border border-accent/20 bg-accent/[0.04] p-4 space-y-3">
           {pending.map((p, i) => (
             <div key={i} className="flex items-baseline justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-extralight text-white/90 truncate">{p.description}</p>
-                <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-[#00FF88]/50">{p.meal}</span>
+                <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-accent/50">{p.meal}</span>
               </div>
               <span className="text-sm font-light text-white/70 whitespace-nowrap tabular-nums">
                 {formatAmount(p.nutrition.calories)}<small className="text-[8px] opacity-40 ml-0.5">kcal</small>
@@ -97,7 +97,7 @@ export function FoodChat({ onAdd }: { onAdd: (meal: FoodEntry['meal'], desc: str
           <div className="flex gap-2 pt-1">
             <button
               onClick={logPending}
-              className="flex-1 py-3 rounded-xl bg-[#00FF88] text-black text-[9px] font-bold uppercase tracking-[0.25em] active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 py-3 rounded-xl bg-accent text-black text-[9px] font-bold uppercase tracking-[0.25em] active:scale-95 transition-all flex items-center justify-center gap-1.5"
             >
               <Check size={12} strokeWidth={2.5} /> Log It
             </button>

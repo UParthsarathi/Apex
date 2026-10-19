@@ -61,7 +61,7 @@ export default function App() {
         <motion.div
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.98, 1, 0.98] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="small-caps !text-[#00FF88]"
+          className="small-caps !text-accent"
         >
           Initializing Application
         </motion.div>
@@ -96,10 +96,10 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden selection:bg-[#00FF88]/30 font-sans">
+    <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden selection:bg-accent/30 font-sans">
 
       {saveError && (
-        <div role="alert" className="fixed top-20 left-1/2 z-[70] flex w-[90%] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-red-500/30 bg-[#1a0a0a] px-4 py-3 text-xs text-red-200 shadow-2xl shadow-black">
+        <div role="alert" className="fixed top-20 left-1/2 z-[70] flex w-[90%] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-red-500/30 bg-danger-surface px-4 py-3 text-xs text-red-200 shadow-2xl shadow-black">
           <span className="flex-1 leading-relaxed">{saveError}</span>
           <button onClick={dismissSaveError} aria-label="Dismiss" className="text-red-200/60 hover:text-red-100">
             <X size={14} />
@@ -115,8 +115,8 @@ export default function App() {
           className={cn(
             "w-10 h-10 rounded-full border transition-all active:scale-95 flex items-center justify-center backdrop-blur-xl shadow-2xl shadow-black",
             activeTab === 'settings'
-              ? "bg-[#00FF88]/20 border-[#00FF88]/40 text-[#00FF88]"
-              : "bg-[#111]/80 border-white/10 text-white/40 hover:bg-[#111] hover:text-white"
+              ? "bg-accent/20 border-accent/40 text-accent"
+              : "bg-raised/80 border-white/10 text-white/40 hover:bg-raised hover:text-white"
           )}
         >
           <User size={18} strokeWidth={1.5} />
@@ -130,14 +130,14 @@ export default function App() {
           <button
             onClick={() => setShowPerformance(true)}
             aria-label="Performance chart"
-            className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-[#00FF88] hover:bg-[#111] hover:border-[#00FF88]/20 transition-all active:scale-95 shadow-2xl shadow-black"
+            className="w-10 h-10 rounded-full bg-raised/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-accent hover:bg-raised hover:border-accent/20 transition-all active:scale-95 shadow-2xl shadow-black"
           >
             <BarChart2 size={18} strokeWidth={1.5} />
           </button>
           <button
             onClick={() => setShowConsistency(true)}
             aria-label="Consistency calendar"
-            className="w-10 h-10 rounded-full bg-[#111]/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-sky-400 hover:bg-[#111] hover:border-sky-400/20 transition-all active:scale-95 shadow-2xl shadow-black"
+            className="w-10 h-10 rounded-full bg-raised/80 backdrop-blur-xl border border-white/10 flex items-center justify-center text-sky-400 hover:bg-raised hover:border-sky-400/20 transition-all active:scale-95 shadow-2xl shadow-black"
           >
             <Calendar size={18} strokeWidth={1.5} />
           </button>
@@ -209,7 +209,7 @@ export default function App() {
 
       {/* Floating Bottom Navigation */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-50">
-        <nav className="bg-[#111]/80 backdrop-blur-2xl border border-white/5 rounded-3xl p-1.5 flex justify-around items-center shadow-2xl shadow-black">
+        <nav className="bg-raised/80 backdrop-blur-2xl border border-white/5 rounded-3xl p-1.5 flex justify-around items-center shadow-2xl shadow-black">
           <NavItem icon={<Home strokeWidth={1.5} size={18} />} label="Daily" isActive={activeTab === 'home'} onClick={() => setActiveTab('home')} />
           <NavItem icon={<Zap strokeWidth={1.5} size={18} />} label="Log" isActive={activeTab === 'protocol'} onClick={() => setActiveTab('protocol')} />
           <NavItem icon={<CheckSquare strokeWidth={1.5} size={18} />} label="Goals" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
@@ -226,7 +226,7 @@ function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, la
       onClick={onClick}
       className={cn(
         "flex flex-col items-center justify-center py-3 px-4 rounded-2xl transition-all duration-300 relative",
-        isActive ? "text-[#00FF88]" : "text-white/20 hover:text-white/50"
+        isActive ? "text-accent" : "text-white/20 hover:text-white/50"
       )}
     >
       <div className={cn("transition-transform duration-500", isActive && "scale-110 -translate-y-0.5")}>
@@ -236,7 +236,7 @@ function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, la
       {isActive && (
         <motion.div
           layoutId="nav-indicator"
-          className="absolute inset-0 bg-[#00FF88]/5 rounded-2xl -z-10"
+          className="absolute inset-0 bg-accent/5 rounded-2xl -z-10"
           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
         />
       )}

@@ -25,11 +25,16 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from './providers';
+import { THEME_SCRIPT } from '@/lib/theme';
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en" className={`${inter.variable} min-h-screen`}>
-      <body suppressHydrationWarning className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white/20">
+    // suppressHydrationWarning: THEME_SCRIPT sets data-theme on <html> before React hydrates
+    <html lang="en" className={`${inter.variable} min-h-screen`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      <body suppressHydrationWarning className="min-h-screen bg-surface text-white selection:bg-white/20">
         <Providers>
           {children}
         </Providers>

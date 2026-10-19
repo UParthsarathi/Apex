@@ -50,7 +50,7 @@ export function NameGate() {
             autoFocus
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-[#00FF88]/40 outline-none transition-all"
+            className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-4 pl-10 text-sm focus:border-accent/40 outline-none transition-all"
           />
         </div>
 
@@ -61,7 +61,7 @@ export function NameGate() {
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="w-full bg-[#00FF88] text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-[#00FF88]/90 disabled:opacity-30 shadow-[0_0_15px_rgba(0,255,136,0.15)] transition-all active:scale-[0.98]"
+          className="w-full bg-accent text-black text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-2xl hover:bg-accent/90 disabled:opacity-30 shadow-[0_0_15px_rgba(0,255,136,0.15)] transition-all active:scale-[0.98]"
         >
           {saving ? 'Saving…' : 'Continue'}
         </button>

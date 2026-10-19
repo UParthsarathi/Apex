@@ -98,7 +98,7 @@ export function HomeTab({ entries, selectedDate, onDateChange, addTask }: {
 
           <div className="relative z-10 flex gap-4 text-right">
             <div className="space-y-0">
-               <span className="text-[8px] font-bold text-[#00FF88]/40 uppercase tracking-widest">Eaten</span>
+               <span className="text-[8px] font-bold text-accent/40 uppercase tracking-widest">Eaten</span>
                <p className="text-xl font-light leading-none text-white/80">{formatAmount(nutrition.calories)}</p>
             </div>
             <div className="space-y-0 text-orange-500/80">

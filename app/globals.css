@@ -1,17 +1,81 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Colour tokens. Use these (bg-surface, text-accent, ...) instead of hex values in class names;
+   tests/unit/theme.test.ts fails on a hard-coded [#hex] class. Dark values are the original design. */
+@theme {
+  --color-accent: #00FF88;
+  --color-accent-soft: #d9ffe9;      /* text on an accent tint (chat bubble) */
+  --color-surface: #0a0a0a;          /* cards and sheets */
+  --color-raised: #111;              /* floating buttons, tooltips */
+  --color-danger-surface: #1a0a0a;   /* error banner */
+  --color-on-fill: #fff;             /* text on a solid colour fill; white in both themes */
+}
+
+/* Light theme, switched on by lib/theme.ts. In this app `white` means ink and `black` means page:
+   every text-white/20, bg-black, border-white/5 ... already reads --color-white / --color-black,
+   so swapping the two flips all neutrals. Bright accents get darker shades to stay readable on white
+   (100-200 -> 800, 300-400 -> 700, 500 -> 600, values from tailwindcss/theme.css). */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-white: #111114;
+  --color-black: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-raised: #ffffff;
+  --color-danger-surface: #fef2f2;
+  --color-accent: #00854a;
+  --color-accent-soft: #065f46;
+
+  --color-red-100: oklch(44.4% 0.177 26.899);
+  --color-red-200: oklch(44.4% 0.177 26.899);
+  --color-red-400: oklch(50.5% 0.213 27.518);
+  --color-red-500: oklch(57.7% 0.245 27.325);
+  --color-orange-400: oklch(55.3% 0.195 38.402);
+  --color-orange-500: oklch(64.6% 0.222 41.116);
+  --color-amber-400: oklch(55.5% 0.163 48.998);
+  --color-amber-500: oklch(66.6% 0.179 58.318);
+  --color-emerald-100: oklch(43.2% 0.095 166.913);
+  --color-emerald-400: oklch(50.8% 0.118 165.612);
+  --color-emerald-500: oklch(59.6% 0.145 163.225);
+  --color-sky-400: oklch(50% 0.134 242.749);
+  --color-sky-500: oklch(58.8% 0.158 241.966);
+  --color-blue-400: oklch(48.8% 0.243 264.376);
+  --color-blue-500: oklch(54.6% 0.245 262.881);
+  --color-indigo-400: oklch(45.7% 0.24 277.023);
+  --color-indigo-500: oklch(51.1% 0.262 276.966);
+  --color-violet-100: oklch(43.2% 0.232 292.759);
+  --color-violet-300: oklch(49.1% 0.27 292.581);
+  --color-violet-400: oklch(49.1% 0.27 292.581);
+  --color-violet-500: oklch(54.1% 0.281 293.009);
+  --color-rose-400: oklch(51.4% 0.222 16.935);
+  --color-rose-500: oklch(58.6% 0.253 17.585);
+  --color-neutral-900: oklch(97% 0 0);
+}
+
+/* Faint labels (white/10-30) read fine on black but wash out on a light page: give them a floor. */
+:root[data-theme="light"] :is(.text-white\/10, .text-white\/15, .text-white\/20, .text-white\/25) {
+  color: color-mix(in oklab, var(--color-white) 45%, transparent);
+}
+:root[data-theme="light"] .text-white\/30 {
+  color: color-mix(in oklab, var(--color-white) 55%, transparent);
+}
+:root[data-theme="light"] .\!text-white\/20 {
+  color: color-mix(in oklab, var(--color-white) 45%, transparent) !important;
+}
+:root[data-theme="light"] .placeholder\:text-white\/10::placeholder {
+  color: color-mix(in oklab, var(--color-white) 40%, transparent);
+}
+
 :root {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--color-black);
+  color: var(--color-white);
   color-scheme: dark;
-  --accent: #00FF88;
 }
 
 html, body {
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: #000000;
+  background-color: var(--color-black);
 }
 
 body {
@@ -48,6 +112,6 @@ body {
 
 /* Atmospheric Effects */
 .bg-subtle-glow {
-  background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.03) 0%, transparent 80%);
+  background: radial-gradient(circle at 50% -20%, color-mix(in oklab, var(--color-white) 3%, transparent) 0%, transparent 80%);
 }
 
